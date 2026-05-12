@@ -7,9 +7,9 @@
 - Proper edges of the grid map for each level
 
 ### Changed
-- **Game name: Regimen Minutum Turrium -> Legenda Legionis Lunae**
-- Level selection menu style: Menu-based -> Map-based
-- Screen type: Exclusive fullscreen -> Borderless windowed
+- **Game name: Regimen Minutum Turrium &rarr Legenda Legionis Lunae**
+- Level selection menu style: Menu-based &rarr Map-based
+- Screen type: Exclusive fullscreen &rarr Borderless windowed
 
 ### Misc
 - Code refactoring

@@ -7,7 +7,7 @@ import config
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
+    screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT), pygame.NOFRAME)
     clock = pygame.time.Clock()
     gm = game_manager.GameManager()
 

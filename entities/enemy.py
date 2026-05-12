@@ -24,7 +24,6 @@ class Enemy:
         elif dy != 0:
             direction = 1 if dy > 0 else -1
             self.path.insert(0, (self.path[0][0], self.path[0][1] + offset * direction))
-        
         dx = self.path[-1][0] - self.path[-2][0]
         dy = self.path[-1][1] - self.path[-2][1]
         if dx != 0:
@@ -36,8 +35,7 @@ class Enemy:
 
         self.distance_left = 0
         for i in range(len(self.path) - 1):
-            self.distance_left += abs(self.path[i][0] - self.path[i + 1][0]) + abs(self.path[i][1] - self.path[i + 1][1])
-
+            self.distance_left -= abs(self.path[i][0] - self.path[i + 1][0]) + abs(self.path[i][1] - self.path[i + 1][1])
         self.path_index = 0
         self.x = self.path[self.path_index][0]
         self.y = self.path[self.path_index][1]
@@ -50,7 +48,6 @@ class Enemy:
             self.killed = True
             return
         
-        # Movement
         total_move = self.current_speed
         while total_move > 0 and self.path_index < len(self.path) - 1:
             target_x, target_y = self.path[self.path_index + 1]
@@ -68,7 +65,7 @@ class Enemy:
                 else: 
                     self.x += move
             total_move -= move
-            self.distance_left -= move
+            self.distance_left += move
 
             if (self.x, self.y) == (target_x, target_y):
                 self.path_index += 1
@@ -76,10 +73,8 @@ class Enemy:
                     self.ended = True
             
     def draw(self, surface):
-        # Draw itself
         pygame.draw.rect(surface, self.color, (self.x - self.width / 2, self.y - self.height / 2, self.width, self.height))
         
-        # Draw health bar
         red_bar = self.width
         green_bar = self.width * max(0, self.current_health / self.health)
         pygame.draw.rect(surface, (255, 0, 0), (self.x - self.width / 2, self.y - self.height / 2 - 10, red_bar, 3))

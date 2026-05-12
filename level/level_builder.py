@@ -20,7 +20,6 @@ class Level_Builder:
             self.path_tile_centers.append(path_tile_centers)
         
     def draw(self, surface):
-        # Draw path tiles
         for current_path_tiles in self.path_tiles:
             for i in range(len(current_path_tiles) - 1):
                 col1, row1 = current_path_tiles[i][0], current_path_tiles[i][1]
@@ -39,7 +38,6 @@ class Level_Builder:
             x, y = math_processor.get_tile_center(current_path_tiles[-1][0], current_path_tiles[-1][1], config.TILE_SIZE)
             pygame.draw.rect(surface, config.COLOR_PATH_TILE, (x - config.TILE_SIZE / 2, y - config.TILE_SIZE / 2, config.TILE_SIZE, config.TILE_SIZE))
 
-        # Draw build tiles
         for build_tile in self.build_tiles:
             x, y = math_processor.get_tile_center(build_tile[0], build_tile[1], config.TILE_SIZE)
             pygame.draw.rect(surface, config.COLOR_BUILD_TILE, (x - config.TILE_SIZE / 2, y - config.TILE_SIZE / 2, config.TILE_SIZE, config.TILE_SIZE))

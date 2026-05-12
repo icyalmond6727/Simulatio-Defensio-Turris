@@ -1,25 +1,27 @@
 import config
 
 TOWERS = {
-    "Pulse Blaster": {
-        "name": "Pulse Blaster",
+    "Autocannon": {
+        "name": "Autocannon",
         "width": config.TILE_SIZE * 0.9,
         "height": config.TILE_SIZE * 0.9,
         "range": 200,
-        "damage": 10,
-        "attack_speed": 30,
+        "damage": 1,
+        "firerate": 60,
         "bullet_speed": 5,
+        "damage_type": "kinetic",
         "gold_cost": 50,
         "color": (0, 255, 0)
     },
-    "Railgun Sentinel": {
-        "name": "Railgun Sentinel",
+    "Lasergun": {
+        "name": "Lasergun",
         "width": config.TILE_SIZE * 0.9,
         "height": config.TILE_SIZE * 0.9,
         "range": 400,
-        "damage": 50,
-        "attack_speed": 90,
+        "damage": 200,
+        "firerate": 0.5,
         "bullet_speed": 20,
+        "damage_type": "thermal",
         "gold_cost": 100,
         "color": (0, 0, 255)
     }
@@ -30,8 +32,10 @@ ENEMIES = {
         "name": "Scout Drone",
         "width": config.TILE_SIZE * 0.25,
         "height": config.TILE_SIZE * 0.25,
-        "health": 50,
+        "health": 100,
         "speed": 0.75,
+        "kinetic_resistance": 0,
+        "thermal_resistance": 0,
         "gold_yield": 10,
         "lives_penalty": 1,
         "color": (255, 0, 0)
@@ -40,8 +44,10 @@ ENEMIES = {
         "name": "Juggernaut Mech",
         "width": config.TILE_SIZE * 0.75,
         "height": config.TILE_SIZE * 0.75,
-        "health": 200,
+        "health": 500,
         "speed": 0.25,
+        "kinetic_resistance": 0.5,
+        "thermal_resistance": 0,
         "gold_yield": 50,
         "lives_penalty": 2,
         "color": (150, 0, 0)

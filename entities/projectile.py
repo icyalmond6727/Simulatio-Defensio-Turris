@@ -15,7 +15,6 @@ class Projectile:
         if self.ended:
             return
         
-        # Movement
         dx, dy = self.target_x - self.x, self.target_y - self.y
         dist = math_processor.get_distance(self.x, self.y, self.target_x, self.target_y)
         if dist <= self.speed:
@@ -26,5 +25,4 @@ class Projectile:
             self.y += dy / dist * self.speed
 
     def draw(self, surface):
-        # Draw itself
         pygame.draw.circle(surface, (255, 255, 0), (self.x, self.y), 4)

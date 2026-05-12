@@ -1,4 +1,3 @@
-import math
 import pygame
 
 import config
@@ -11,17 +10,9 @@ from entities.tower import Tower
 
 from level.level_builder import Level_Builder
 
-from scenes.defeat_menu import DefeatMenu
 from scenes.scene import Scene
-from scenes.pause_menu import PauseMenu
-from scenes.victory_menu import VictoryMenu
-
-from ui.inspect_menu import InspectMenu
-from ui.resource_menu import ResourceMenu
-from ui.tower_menu import TowerMenu
 
 import utils.math_processor as math_processor
-from utils.quick_sort import quick_sort
 
 class InGame(Scene):
     def __init__(self, game_manager, level_index):
@@ -38,14 +29,10 @@ class InGame(Scene):
         self.current_wave = 0
         self.current_frame = 0
 
-        self.wave_button = pygame.Rect(170, 10, 50, 50)
         self.wave_cooldown = self.wave_interval = 0
-
-        self.tower_menu = None
-        self.inspect_menu = InspectMenu()
-        self.resource_menu = ResourceMenu()
-
         self.selected_entity = None
+        
+        self.game_manager.graphics.tower_menu = None 
     
     def spawn_enemy(self, path_index, enemy_name):
         new_enemy = Enemy(enemy_name, self.level.path_tile_centers[path_index])
@@ -75,59 +62,56 @@ class InGame(Scene):
         self.wave_cooldown = self.wave_interval
     
     def handle_interaction(self, interaction):
-        # Escape - Pause
+        super().handle_interaction(interaction)
         if interaction.type == pygame.KEYDOWN and interaction.key == pygame.K_ESCAPE:
+            from scenes.pause_menu import PauseMenu
             self.game_manager.change_scene(PauseMenu(self.game_manager, self))
         
-        # Click
         elif interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
+            wx, wy = self.screen_to_world(x, y)
+            gfx = self.game_manager.graphics
 
-            # Start wave
-            if math_processor.get_distance(x, y, self.wave_button.centerx, self.wave_button.centery) <= self.wave_button.width / 2:
+            if math_processor.get_distance(x, y, gfx.wave_button.centerx, gfx.wave_button.centery) <= gfx.wave_button.width / 2:
                 if self.current_wave < self.level.wave_count and self.wave_cooldown == 0:
                     self.start_wave()
                 return
 
-            # Build tower
             keep_menu = False
-            if self.tower_menu is not None:
-                choice = self.tower_menu.handle_click(x, y)
+            if gfx.tower_menu is not None:
+                choice = gfx.tower_menu.handle_click(x, y)
                 if choice in TOWERS:
                     cost = TOWERS[choice]["gold_cost"]
                     if self.gold >= cost:
                         self.gold -= cost
-                        new_tower = Tower(choice, self.tower_menu.build_tile_center[0], self.tower_menu.build_tile_center[1])
+                        new_tower = Tower(choice, gfx.tower_menu.build_tile_center[0], gfx.tower_menu.build_tile_center[1])
                         self.towers.append(new_tower)
-                        self.level.build_tiles.remove(self.tower_menu.build_tile)
-                        self.tower_menu = None
+                        self.level.build_tiles.remove(gfx.tower_menu.build_tile)
+                        gfx.tower_menu = None
                     else:
                         keep_menu = True
-                        print("Not enough gold!")
+                elif choice == "keep_open":
+                    return
                 elif choice == "close":
-                    self.tower_menu = None
-            if not keep_menu:
-                new_build = False
+                    gfx.tower_menu = None
+                    
+            if not keep_menu and gfx.tower_menu is None:
                 for build_tile in self.level.build_tiles:
                     build_tile_center = math_processor.get_tile_center(build_tile[0], build_tile[1], config.TILE_SIZE)
-                    if math_processor.get_distance(x, y, build_tile_center[0], build_tile_center[1]) <= config.TILE_SIZE / 2:
-                        # Phát hiện click trúng ô đất -> Khởi tạo Menu vòng tròn!
-                        self.tower_menu = TowerMenu(build_tile, build_tile_center)
-                        new_build = True
+                    if math_processor.get_distance(wx, wy, build_tile_center[0], build_tile_center[1]) <= config.TILE_SIZE / 2:
+                        gfx.open_tower_menu(build_tile = build_tile, build_tile_center = build_tile_center)
                         break
-                if not new_build: 
-                    self.tower_menu = None
             
-            # Inspect towers/enemies
             entity_found = False
             for tower in self.towers:
-                if math_processor.get_distance(x, y, tower.x, tower.y) <= tower.width / 2:
+                if math_processor.get_distance(wx, wy, tower.x, tower.y) <= tower.width / 2:
                     self.selected_entity = tower
+                    gfx.open_tower_menu(tower = tower)
                     entity_found = True
                     break
             if not entity_found:
                 for enemy in self.enemies:
-                    if math_processor.get_distance(x, y, enemy.x, enemy.y) <= enemy.width / 2:
+                    if math_processor.get_distance(wx, wy, enemy.x, enemy.y) <= enemy.width / 2:
                         self.selected_entity = enemy
                         entity_found = True
                         break
@@ -170,23 +154,4 @@ class InGame(Scene):
             self.event_heap.push((victory_frame, "victory", ()))
 
     def draw(self, surface):
-        surface.fill(config.COLOR_BACKGROUND)
-        for x in range(0, config.WINDOW_WIDTH, config.TILE_SIZE):
-            pygame.draw.line(surface, config.COLOR_GRID, (x, 0), (x, config.WINDOW_HEIGHT))
-        for y in range(0, config.WINDOW_HEIGHT, config.TILE_SIZE):
-            pygame.draw.line(surface, config.COLOR_GRID, (0, y), (config.WINDOW_WIDTH, y))
-
-        self.level.draw(surface)
-        for tower in self.towers:
-            tower.draw(surface)
-        sorted_enemies = quick_sort(self.enemies, key = lambda e: -e.distance_left)
-        for enemy in sorted_enemies:
-            enemy.draw(surface)
-        for projectile in self.projectiles:
-            projectile.draw(surface)
-
-        self.resource_menu.draw(surface, self.game_manager, self)
-        self.inspect_menu.draw(surface, self.game_manager, self.selected_entity)
-        
-        if self.tower_menu is not None:
-            self.tower_menu.draw(surface)
+        self.game_manager.graphics.draw_in_game(surface, self)

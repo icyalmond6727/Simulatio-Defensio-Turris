@@ -5,18 +5,45 @@ from scenes.scene import Scene
 import core.save_manager as save_manager
 
 class SaveMenu(Scene):
+    """
+    Provides the user interface for players to select, load, or delete their game progress slots.
+    """
     def __init__(self, game_manager):
+        """
+        Initializes the save menu, loading metadata for all available slots.
+        
+        Args:
+            game_manager (GameManager): The global manager instance.
+            
+        Returns:
+            None
+        """
         super().__init__(game_manager)
         self.save_data = []
         self.refresh_saves()
         self.deleting_slot = None
 
     def refresh_saves(self):
+        """
+        Reads the save files from disk to update the displayed slot information.
+        
+        Returns:
+            None
+        """
         self.save_data = []
         for i in range(3):
             self.save_data.append(save_manager.load_slot(i))
 
     def handle_interaction(self, interaction):
+        """
+        Processes clicks for selecting a save slot to load, or prompting a deletion confirmation.
+        
+        Args:
+            interaction (pygame.event.Event): The Pygame event payload.
+            
+        Returns:
+            None
+        """
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
             gfx = self.game_manager.graphics
@@ -46,4 +73,13 @@ class SaveMenu(Scene):
                 self.game_manager.change_scene(StartMenu(self.game_manager))
 
     def draw(self, surface):
+        """
+        Requests the graphics system to render the save slots and confirmation popups if active.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            
+        Returns:
+            None
+        """
         self.game_manager.graphics.draw_save_menu(surface, self.game_manager, self.save_data, self.deleting_slot)

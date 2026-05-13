@@ -1,3 +1,7 @@
+"""
+Global configuration module for the game.
+Contains fixed constants defining screen dimensions, grid sizes, core timings, and universal color palettes.
+"""
 import pygame
 
 pygame.init()

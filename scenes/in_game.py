@@ -15,7 +15,21 @@ from scenes.scene import Scene
 import utils.math_processor as math_processor
 
 class InGame(Scene):
+    """
+    The core gameplay loop and state manager for an active level.
+    Manages entities (towers, enemies, projectiles), wave progression, economy, and the event heap.
+    """
     def __init__(self, game_manager, level_index):
+        """
+        Initializes the level environment, player resources, and event scheduling system.
+        
+        Args:
+            game_manager (GameManager): The global manager instance.
+            level_index (int): The identifier for the level currently being played.
+            
+        Returns:
+            None
+        """
         super().__init__(game_manager)
         self.level = Level_Builder(level_index)
         self.level_index = level_index
@@ -29,16 +43,34 @@ class InGame(Scene):
         self.current_wave = 0
         self.current_frame = 0
 
-        self.wave_cooldown = self.wave_interval = 0
+        self.wave_cooldown = 0
+        self.wave_interval = 0
         self.selected_entity = None
         
         self.game_manager.graphics.tower_menu = None 
     
     def spawn_enemy(self, path_index, enemy_name):
+        """
+        Instantiates an enemy object at the specified spawn path and adds it to the active pool.
+        
+        Args:
+            path_index (int): The index of the path vector the enemy will follow.
+            enemy_name (str): The string identifier of the enemy type to spawn.
+            
+        Returns:
+            None
+        """
         new_enemy = Enemy(enemy_name, self.level.path_tile_centers[path_index])
         self.enemies.append(new_enemy)
 
     def start_wave(self):
+        """
+        Parses the level configuration to schedule all enemy spawns for the upcoming wave.
+        Pushes spawn and delay events into the priority event heap.
+        
+        Returns:
+            None
+        """
         if self.current_wave >= len(self.level.waves):
             return
 
@@ -62,6 +94,16 @@ class InGame(Scene):
         self.wave_cooldown = self.wave_interval
     
     def handle_interaction(self, interaction):
+        """
+        Processes player input specifically for gameplay mechanics like tower building,
+        unit inspection, and wave initiation.
+        
+        Args:
+            interaction (pygame.event.Event): The Pygame event payload.
+            
+        Returns:
+            None
+        """
         super().handle_interaction(interaction)
         if interaction.type == pygame.KEYDOWN and interaction.key == pygame.K_ESCAPE:
             from scenes.pause_menu import PauseMenu
@@ -87,13 +129,41 @@ class InGame(Scene):
                         new_tower = Tower(choice, gfx.tower_menu.build_tile_center[0], gfx.tower_menu.build_tile_center[1])
                         self.towers.append(new_tower)
                         self.level.build_tiles.remove(gfx.tower_menu.build_tile)
-                        gfx.tower_menu = None
+                        self.selected_entity = new_tower
+                        gfx.open_tower_menu(tower = new_tower)
+                        keep_menu = True
                     else:
                         keep_menu = True
+
+                elif choice == "upgrade":
+                    tower = gfx.tower_menu.tower
+                    if tower.upgrade_level < len(tower.upgrades):
+                        upg_cost = tower.upgrades[tower.upgrade_level]["cost"]
+                        if self.gold >= upg_cost:
+                            self.gold -= upg_cost
+                            tower.upgrade()
+                    keep_menu = True
+
+                elif choice == "sell":
+                    tower = gfx.tower_menu.tower
+                    refund_amount = tower.total_gold_spent // 2
+                    self.gold += refund_amount
+                    
+                    col = int(tower.x // config.TILE_SIZE)
+                    row = int(tower.y // config.TILE_SIZE)
+                    self.level.build_tiles.append((col, row))
+                    
+                    self.towers.remove(tower)
+                    self.selected_entity = None
+                    gfx.tower_menu = None
+
                 elif choice == "keep_open":
                     return
                 elif choice == "close":
                     gfx.tower_menu = None
+                
+            if keep_menu:
+                return
                     
             if not keep_menu and gfx.tower_menu is None:
                 for build_tile in self.level.build_tiles:
@@ -119,6 +189,14 @@ class InGame(Scene):
                 self.selected_entity = None
 
     def update(self):
+        """
+        Executes a single logical frame tick.
+        Processes the event heap, updates entity positions and states, checks win/loss conditions, 
+        and handles entity cleanup (garbage collection).
+        
+        Returns:
+            None
+        """
         self.current_frame += 1
         if self.wave_cooldown > 0:
             self.wave_cooldown -= 1
@@ -154,4 +232,13 @@ class InGame(Scene):
             self.event_heap.push((victory_frame, "victory", ()))
 
     def draw(self, surface):
+        """
+        Passes the scene's rendering authority to the centralized Graphics System.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            
+        Returns:
+            None
+        """
         self.game_manager.graphics.draw_in_game(surface, self)

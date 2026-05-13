@@ -16,20 +16,72 @@ SX = config.WINDOW_WIDTH / BASE_W
 SY = config.WINDOW_HEIGHT / BASE_H
 
 def get_rect(x, y, w, h):
+    """
+    Creates a Pygame Rect scaled to the current screen resolution based on base dimensions.
+    
+    Args:
+        x (float): The base x-coordinate.
+        y (float): The base y-coordinate.
+        w (float): The base width.
+        h (float): The base height.
+        
+    Returns:
+        pygame.Rect: The appropriately scaled Pygame rectangle object.
+    """
     return pygame.Rect(int(x * SX), int(y * SY), int(w * SX), int(h * SY))
 
 def get_val_x(v):
+    """
+    Scales an x-coordinate or width value based on the horizontal scaling factor.
+    
+    Args:
+        v (float): The base horizontal value.
+        
+    Returns:
+        int: The scaled horizontal value.
+    """
     return int(v * SX)
 
 def get_val_y(v):
+    """
+    Scales a y-coordinate or height value based on the vertical scaling factor.
+    
+    Args:
+        v (float): The base vertical value.
+        
+    Returns:
+        int: The scaled vertical value.
+    """
     return int(v * SY)
 
 class InspectMenu:
+    """
+    Handles the rendering of the inspection menu docking at the bottom of the screen.
+    Displays detailed statistics for the currently selected entity (Enemy or Tower).
+    """
     def __init__(self):
+        """
+        Initializes the dimensions and position of the inspection dock.
+        
+        Returns:
+            None
+        """
         self.dock_h = get_val_y(100)
         self.dock_rect = pygame.Rect(0, config.WINDOW_HEIGHT - self.dock_h, config.WINDOW_WIDTH, self.dock_h)
 
-    def draw(self, surface, game_manager, selected_entity):
+    def draw(self, surface, game_manager, selected_entity, upgrade_data = None):
+        """
+        Renders the inspection menu onto the given surface.
+        
+        Args:
+            surface (pygame.Surface): The main display surface.
+            game_manager (GameManager): The global game manager instance for font access.
+            selected_entity (object): The entity object currently selected by the player.
+            upgrade_data (dict, optional): Data containing stat differences for upgrades. Defaults to None.
+            
+        Returns:
+            None
+        """
         if selected_entity is None:
             return
         
@@ -37,25 +89,100 @@ class InspectMenu:
         pygame.draw.line(surface, (0, 255, 255), (0, config.WINDOW_HEIGHT - self.dock_h), (config.WINDOW_WIDTH, config.WINDOW_HEIGHT - self.dock_h), max(1, get_val_y(2)))
 
         e = selected_entity
-        name_txt = game_manager.font.render(f"UNIT: {e.name.upper()}", True, (0, 255, 255))
+        
+        display_name = e.name.upper()
+        suffix = ""
+        if hasattr(e, "upgrade_level"):
+            numerals = ["I", "II", "III", "IV", "V"]
+            target_level = e.upgrade_level + 1 if upgrade_data else e.upgrade_level
+            suffix = f" {numerals[min(target_level, len(numerals) - 1)]}"
+            
+        name_txt = game_manager.font.render(f"UNIT: {display_name}", True, (0, 255, 255))
         surface.blit(name_txt, (get_val_x(30), config.WINDOW_HEIGHT - get_val_y(85)))
 
+        if suffix:
+            suffix_color = (0, 255, 0) if upgrade_data else (0, 255, 255)
+            suffix_txt = game_manager.font.render(suffix, True, suffix_color)
+            surface.blit(suffix_txt, (get_val_x(30) + name_txt.get_width(), config.WINDOW_HEIGHT - get_val_y(85)))
+
         if hasattr(e, "damage"):
-            stats = f"DAMAGE: {e.current_damage} | RANGE: {e.current_range} | FIRERATE: {e.current_firerate} | BULLET SPEED: {e.current_bullet_speed} | DAMAGE TYPE: {e.damage_type.capitalize()}"
-            color = (100, 200, 255)
+            display_speed = "Instant" if e.current_bullet_speed == 0 else e.current_bullet_speed
+            chunks = []
+            base_color = (100, 200, 255)
+            
+            def format_stat(name, current_val, stat_key, is_pos_inc = True):
+                chunks.append((f"{name}: {current_val}", base_color))
+                if upgrade_data and stat_key in upgrade_data:
+                    diff = upgrade_data[stat_key]
+                    if diff != 0:
+                        is_good = (diff > 0) if is_pos_inc else (diff < 0)
+                        color = (0, 255, 0) if is_good else (255, 50, 50)
+                        sign = "+" if diff > 0 else ""
+                        chunks.append((f" ({sign}{diff})", color))
+                chunks.append((" | ", base_color))
+
+            format_stat("DAMAGE", e.current_damage, "damage", True)
+            format_stat("RANGE", e.current_range, "range", True)
+            format_stat("FIRERATE", e.current_firerate, "firerate", True)
+            
+            chunks.append((f"BULLET SPEED: {display_speed}", base_color))
+            if upgrade_data and "bullet_speed" in upgrade_data:
+                diff = upgrade_data["bullet_speed"]
+                if diff != 0:
+                    sign = "+" if diff > 0 else ""
+                    chunks.append((f" ({sign}{diff})", (0, 255, 0))) # Tốc độ đạn tăng luôn là tốt
+            
+            chunks.append((f" | DAMAGE TYPE: {e.damage_type.capitalize()}", base_color))
+            
+            if upgrade_data and "damage_duration" in upgrade_data:
+                diff = upgrade_data["damage_duration"]
+                if diff != 0:
+                    chunks.append((" | DUR", base_color))
+                    sign = "+" if diff > 0 else ""
+                    color = (0, 255, 0) if diff < 0 else (255, 50, 50) # Thời gian dồn sát thương ngắn hơn là tốt
+                    chunks.append((f" ({sign}{diff})", color))
+
+            cur_x = get_val_x(30)
+            cur_y = config.WINDOW_HEIGHT - get_val_y(40)
+            for text, color in chunks:
+                txt_surf = game_manager.ui_font.render(text, True, color)
+                surface.blit(txt_surf, (cur_x, cur_y))
+                cur_x += txt_surf.get_width()
         else:
             hp_ratio = f"{int(e.current_health)} / {e.health}"
             stats = f"HP: {hp_ratio} | SPEED: {e.current_speed} | KINETIC RESISTANCE: {e.kinetic_resistance * 100}% | THERMAL RESISTANCE: {e.thermal_resistance * 100}% | GOLD YIELD: {e.gold_yield} | LIVES PENALTY: {e.lives_penalty}"
             color = (255, 100, 100)
 
-        stats_txt = game_manager.ui_font.render(stats, True, color)
-        surface.blit(stats_txt, (get_val_x(30), config.WINDOW_HEIGHT - get_val_y(40)))
+            stats_txt = game_manager.ui_font.render(stats, True, color)
+            surface.blit(stats_txt, (get_val_x(30), config.WINDOW_HEIGHT - get_val_y(40)))
 
 class ResourceMenu:
+    """
+    Manages the heads-up display (HUD) for player resources and wave progression.
+    Displays current gold, lives, wave number, and the wave trigger button.
+    """
     def __init__(self):
+        """
+        Initializes the bounding rectangle for the resource HUD.
+        
+        Returns:
+            None
+        """
         self.hud_rect = get_rect(10, 40, 160, 95)
 
     def draw(self, surface, game_manager, in_game_scene, wave_button):
+        """
+        Renders the resource HUD and wave button onto the given surface.
+        
+        Args:
+            surface (pygame.Surface): The main display surface.
+            game_manager (GameManager): The global game manager instance.
+            in_game_scene (InGame): The active in-game scene containing resource data.
+            wave_button (pygame.Rect): The graphical bounding box of the wave start button.
+            
+        Returns:
+            None
+        """
         pygame.draw.rect(surface, (40, 40, 45), self.hud_rect, border_radius = get_val_x(8))
         pygame.draw.rect(surface, (100, 100, 110), self.hud_rect, width = max(1, get_val_x(2)), border_radius = get_val_x(8))
 
@@ -98,14 +225,30 @@ class ResourceMenu:
         pygame.draw.polygon(surface, (255, 255, 255), play_icon)
 
 class TowerMenu:
+    """
+    Handles the context menu for building new towers or managing existing ones.
+    Displays building options when clicking empty build tiles, or targeting priorities
+    when clicking on an existing tower.
+    """
     def __init__(self, tower = None, build_tile = None, build_tile_center = None):
+        """
+        Initializes the menu layout and interactable buttons based on context.
+        
+        Args:
+            tower (Tower, optional): The selected tower instance. If None, it implies a build context.
+            build_tile (tuple, optional): The grid coordinates of the build tile.
+            build_tile_center (tuple, optional): The pixel coordinates of the build tile's center.
+            
+        Returns:
+            None
+        """
         self.build_tile = build_tile
         self.build_tile_center = build_tile_center
         self.tower = tower
         
         if self.tower is None:
             self.dock_rect = pygame.Rect(0, config.WINDOW_HEIGHT - get_val_y(100), config.WINDOW_WIDTH, get_val_y(100))
-            self.tower_options = ["Autocannon", "Lasergun"] 
+            self.tower_options = ["Coilgun", "Lasergun"] 
             self.buttons = {}
             btn_w, btn_h, gap = get_val_x(200), get_val_y(50), get_val_x(20)
             start_x = get_val_x(30)
@@ -142,8 +285,30 @@ class TowerMenu:
             for i, key in enumerate(self.res_options):
                 logic_key = None if key == "None" else key
                 self.res_buttons[logic_key] = pygame.Rect(start_x + i * (btn_w + gap), start_y2, btn_w, btn_h)
+            
+            action_btn_w, action_btn_h = get_val_x(150), get_val_y(40)
+            sell_x = config.WINDOW_WIDTH - get_val_x(30) - action_btn_w
+            upg_x = sell_x - gap - action_btn_w
+            
+            self.sell_btn = pygame.Rect(sell_x, self.dock_rect.top + get_val_y(30), action_btn_w, action_btn_h)
+            self.upgrade_btn = pygame.Rect(upg_x, self.dock_rect.top + get_val_y(30), action_btn_w, action_btn_h)
 
-    def draw(self, surface, font):
+    def draw(self, surface, font, mx = 0, my = 0, cx = 0, cy = 0, zoom = 1):
+        """
+        Renders the tower management or construction interface.
+        
+        Args:
+            surface (pygame.Surface): The main display surface.
+            font (pygame.font.Font): The font used for rendering text.
+            mx (int): Mouse x-coordinate. Defaults to 0.
+            my (int): Mouse y-coordinate. Defaults to 0.
+            cx (int): Camera x-coordinate. Defaults to 0.
+            cy (int): Camera y-coordinate. Defaults to 0.
+            zoom (float): Zoom level. Defaults to 1.
+            
+        Returns:
+            None
+        """
         pygame.draw.rect(surface, (25, 30, 35), self.dock_rect)
         pygame.draw.line(surface, (0, 255, 0) if self.tower is None else (0, 200, 255), (0, self.dock_rect.top), (config.WINDOW_WIDTH, self.dock_rect.top), max(1, get_val_y(2)))
         
@@ -151,12 +316,47 @@ class TowerMenu:
             title_txt = font.render("BUILD TOWER", True, (200, 200, 200))
             surface.blit(title_txt, (get_val_x(30), self.dock_rect.top + get_val_y(10)))
 
+            hovered_tower = None
             for name, rect in self.buttons.items():
                 pygame.draw.rect(surface, (70, 75, 80), rect, border_radius = get_val_x(5))
                 icon_rect = pygame.Rect(rect.x + get_val_x(5), rect.y + get_val_y(5), rect.height - get_val_y(10), rect.height - get_val_y(10))
                 pygame.draw.rect(surface, entity_data.TOWERS[name]["color"], icon_rect, border_radius = get_val_x(5))
                 text = font.render(name, True, (255, 255, 255))
                 surface.blit(text, (rect.x + icon_rect.width + get_val_x(15), rect.centery - text.get_height() / 2))
+
+                if rect.collidepoint(mx, my):
+                    hovered_tower = name
+
+            if hovered_tower:
+                data = entity_data.TOWERS[hovered_tower]
+                
+                tooltip_h = get_val_y(60)
+                tooltip_rect = pygame.Rect(0, self.dock_rect.top - tooltip_h, config.WINDOW_WIDTH, tooltip_h)
+                pygame.draw.rect(surface, (20, 20, 25), tooltip_rect)
+                pygame.draw.line(surface, (0, 255, 0), (0, tooltip_rect.top), (config.WINDOW_WIDTH, tooltip_rect.top), max(1, get_val_y(2)))
+                
+                title_hover = font.render(f"PREVIEW: {hovered_tower.upper()}", True, (0, 255, 0))
+                surface.blit(title_hover, (get_val_x(30), tooltip_rect.top + get_val_y(10)))
+                
+                bs = "Instant" if data["bullet_speed"] == 0 else data["bullet_speed"]
+                stats = f"COST: {data['gold_cost']} G | DAMAGE: {data['damage']} | RANGE: {data['range']} | FIRERATE: {data['firerate']} | BULLET SPEED: {bs} | TYPE: {data['damage_type'].capitalize()}"
+                stats_txt = font.render(stats, True, (100, 200, 255))
+                surface.blit(stats_txt, (get_val_x(30), tooltip_rect.top + get_val_y(35)))
+                
+                wx, wy = self.build_tile_center
+                px = int(wx * zoom + cx)
+                py = int(wy * zoom + cy)
+                
+                radius = max(1, int(data['range'] * zoom))
+                pygame.draw.circle(surface, (255, 255, 255), (px, py), radius, max(1, int(1 * zoom)))
+                
+                tw = max(1, int(data['width'] * zoom))
+                th = max(1, int(data['height'] * zoom))
+                preview_surf = pygame.Surface((tw, th), pygame.SRCALPHA)
+                r, g, b = data['color']
+                preview_surf.fill((r, g, b, 150))
+                surface.blit(preview_surf, (px - tw // 2, py - th // 2))
+
         else:
             title_txt = font.render("TARGETING & RESISTANCE PRIORITY", True, (200, 200, 200))
             surface.blit(title_txt, (get_val_x(30), self.dock_rect.top + get_val_y(5)))
@@ -177,8 +377,34 @@ class TowerMenu:
                 name_key = "None" if key is None else key
                 text = font.render(self.res_display_names[name_key], True, text_color)
                 surface.blit(text, (rect.centerx - text.get_width() / 2, rect.centery - text.get_height() / 2))
+            
+            refund_amount = self.tower.total_gold_spent // 2
+            pygame.draw.rect(surface, (200, 50, 50), self.sell_btn, border_radius = get_val_x(5))
+            sell_txt = font.render(f"SELL: +{refund_amount} G", True, (255, 255, 255))
+            surface.blit(sell_txt, (self.sell_btn.centerx - sell_txt.get_width() / 2, self.sell_btn.centery - sell_txt.get_height() / 2))
+
+            if self.tower.upgrade_level < len(self.tower.upgrades):
+                upg_cost = self.tower.upgrades[self.tower.upgrade_level]["cost"]
+                pygame.draw.rect(surface, (50, 150, 200), self.upgrade_btn, border_radius = get_val_x(5))
+                upg_txt = font.render(f"UPGRADE: -{upg_cost} G", True, (255, 255, 255))
+            else:
+                pygame.draw.rect(surface, (100, 100, 100), self.upgrade_btn, border_radius = get_val_x(5))
+                upg_txt = font.render("MAX LEVEL", True, (200, 200, 200))
+            
+            surface.blit(upg_txt, (self.upgrade_btn.centerx - upg_txt.get_width() / 2, self.upgrade_btn.centery - upg_txt.get_height() / 2))
     
     def handle_click(self, x, y):
+        """
+        Processes a mouse click interaction within the menu area.
+        
+        Args:
+            x (int): The x-coordinate of the mouse click.
+            y (int): The y-coordinate of the mouse click.
+            
+        Returns:
+            str: The name of the tower to build, "keep_open" if a setting was modified, 
+                 or "close" if the click was outside interactable elements.
+        """
         if self.tower is None:
             if self.dock_rect.collidepoint(x, y):
                 for name, rect in self.buttons.items():
@@ -196,12 +422,28 @@ class TowerMenu:
                     if rect.collidepoint(x, y):
                         self.tower.resistance_priority = key
                         return "keep_open"
+                
+                if self.sell_btn.collidepoint(x, y):
+                    return "sell"
+                if self.upgrade_btn.collidepoint(x, y):
+                    return "upgrade"
+                
                 return "keep_open"
             return "close"
 
 class GameGraphics:
+    """
+    Central wrapper class that handles all complex rendering operations for the game.
+    Provides methods to draw various game states, UI menus, and entities based on the camera view.
+    """
     def __init__(self):
-        self.wave_button = pygame.Rect(get_val_x(190), get_val_y(40), get_val_x(50), get_val_x(50))
+        """
+        Initializes global UI element configurations, buttons, and sub-menus.
+        
+        Returns:
+            None
+        """
+        self.wave_button = pygame.Rect(get_val_x(180), get_val_y(40), get_val_x(50), get_val_x(50))
         self.inspect_menu = InspectMenu()
         self.resource_menu = ResourceMenu()
         self.tower_menu = None
@@ -255,15 +497,44 @@ class GameGraphics:
         self.confirm_no = pygame.Rect(self.confirm_popup.right - get_val_x(50) - conf_btn_w, self.confirm_popup.bottom - get_val_y(70), conf_btn_w, get_val_y(40))
 
     def open_tower_menu(self, tower = None, build_tile = None, build_tile_center = None):
+        """
+        Instantiates a new TowerMenu context based on the passed parameters.
+        
+        Args:
+            tower (Tower, optional): The existing tower to configure. Defaults to None.
+            build_tile (tuple, optional): Grid coordinates of the tile to build upon. Defaults to None.
+            build_tile_center (tuple, optional): Pixel center of the tile. Defaults to None.
+            
+        Returns:
+            None
+        """
         self.tower_menu = TowerMenu(tower, build_tile, build_tile_center)
 
-    def draw_enemy(self, surface, enemy, cx, cy, zoom):
+    def draw_enemy(self, surface, enemy, cx, cy, zoom, is_selected = False):  
+        """
+        Renders an enemy and its health bar adjusted for camera zoom and translation.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            enemy (Enemy): The enemy instance to draw.
+            cx (float): The camera x-translation.
+            cy (float): The camera y-translation.
+            zoom (float): The current camera zoom factor.
+            is_selected (bool): Whether the enemy is currently selected by the player. Defaults to False.
+            
+        Returns:
+            None
+        """
         w = max(1, int(enemy.width * zoom))
         h = max(1, int(enemy.height * zoom))
         x = int(enemy.x * zoom + cx)
         y = int(enemy.y * zoom + cy)
-        pygame.draw.rect(surface, enemy.color, (x - w // 2, y - h // 2, w, h))
+
+        if is_selected:
+            pygame.draw.rect(surface, (255, 255, 200), (x - w // 2 - max(1, int(2 * zoom)), y - h // 2 - max(1, int(2 * zoom)), w + max(2, int(4 * zoom)), h + max(2, int(4 * zoom))), max(1, int(2 * zoom)))
         
+        pygame.draw.rect(surface, enemy.color, (x - w // 2, y - h // 2, w, h))
+
         red_bar = w
         green_bar = int(w * max(0, enemy.current_health / enemy.health))
         bar_y = y - h // 2 - max(1, int(10 * zoom))
@@ -272,27 +543,101 @@ class GameGraphics:
         pygame.draw.rect(surface, (0, 255, 0), (x - w // 2, bar_y, green_bar, bar_h))
 
     def draw_projectile(self, surface, projectile, cx, cy, zoom):
-        x = int(projectile.x * zoom + cx)
-        y = int(projectile.y * zoom + cy)
-        pygame.draw.circle(surface, (255, 255, 0), (x, y), max(2, int(4 * zoom)))
+        """
+        Renders a projectile or a continuous beam adjusted for camera view.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            projectile (Projectile or Beam): The projectile/beam instance to draw.
+            cx (float): The camera x-translation.
+            cy (float): The camera y-translation.
+            zoom (float): The current camera zoom factor.
+            
+        Returns:
+            None
+        """
+        if hasattr(projectile, "target"):
+            x1 = int(projectile.x * zoom + cx)
+            y1 = int(projectile.y * zoom + cy)
+            x2 = int(projectile.target.x * zoom + cx)
+            y2 = int(projectile.target.y * zoom + cy)
+            
+            thickness = max(1, int(3 * zoom))
+            pygame.draw.line(surface, projectile.color, (x1, y1), (x2, y2), thickness)
+        else:
+            x = int(projectile.x * zoom + cx)
+            y = int(projectile.y * zoom + cy)
+            pygame.draw.circle(surface, (255, 255, 0), (x, y), max(2, int(4 * zoom)))
 
-    def draw_tower_effects(self, surface, tower, cx, cy, zoom):
+    def draw_tower_effects(self, surface, tower, cx, cy, zoom, upgrade_data = None):
+        """
+        Renders tower operational effects such as its range radius and targeting lines.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            tower (Tower): The tower instance to evaluate.
+            cx (float): The camera x-translation.
+            cy (float): The camera y-translation.
+            zoom (float): The current camera zoom factor.
+            upgrade_data (dict, optional): Data containing stat differences for upgrades. Defaults to None.
+            
+        Returns:
+            None
+        """
         x = int(tower.x * zoom + cx)
         y = int(tower.y * zoom + cy)
+        
         pygame.draw.circle(surface, (255, 255, 255), (x, y), max(1, int(tower.current_range * zoom)), max(1, int(1 * zoom)))
+        
+        if upgrade_data is not None:
+            range_diff = upgrade_data.get("range", 0)
+            new_range = tower.current_range + range_diff
+            pygame.draw.circle(surface, (0, 255, 0), (x, y), max(1, int(new_range * zoom)), max(1, int(2 * zoom)))
+            
         if tower.target is not None:
             tx = int(tower.target.x * zoom + cx)
             ty = int(tower.target.y * zoom + cy)
             pygame.draw.line(surface, (155, 155, 155), (x, y), (tx, ty), max(1, int(2 * zoom)))
 
-    def draw_tower(self, surface, tower, cx, cy, zoom):
+    def draw_tower(self, surface, tower, cx, cy, zoom, is_selected = False):
+        """
+        Renders the base structure of a tower adjusted for camera view.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            tower (Tower): The tower instance to draw.
+            cx (float): The camera x-translation.
+            cy (float): The camera y-translation.
+            zoom (float): The current camera zoom factor.
+            is_selected (bool): Whether the tower is currently selected by the player. Defaults to False.
+            
+        Returns:
+            None
+        """
         w = max(1, int(tower.width * zoom))
         h = max(1, int(tower.height * zoom))
         x = int(tower.x * zoom + cx)
         y = int(tower.y * zoom + cy)
+
+        if is_selected:
+            pygame.draw.rect(surface, (255, 255, 200), (x - w // 2 - max(1, int(2 * zoom)), y - h // 2 - max(1, int(2 * zoom)), w + max(2, int(4 * zoom)), h + max(2, int(4 * zoom))), max(1, int(2 * zoom)))
+
         pygame.draw.rect(surface, tower.color, (x - w // 2, y - h // 2, w, h))
 
     def draw_level(self, surface, level, cx, cy, zoom):
+        """
+        Draws the static level map elements including path segments and available build tiles.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            level (Level_Builder): The level builder instance detailing map layout.
+            cx (float): The camera x-translation.
+            cy (float): The camera y-translation.
+            zoom (float): The current camera zoom factor.
+            
+        Returns:
+            None
+        """
         tile_sz = int(config.TILE_SIZE * zoom) + 1
         
         for current_path_tiles in level.path_tiles:
@@ -318,6 +663,17 @@ class GameGraphics:
             pygame.draw.rect(surface, config.COLOR_BUILD_TILE, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
     
     def draw_in_game(self, surface, in_game_scene):
+        """
+        Renders the complete in-game scene, organizing z-indexing (sorting entities) 
+        and composing the world UI elements.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            in_game_scene (InGame): The primary in-game scene object.
+            
+        Returns:
+            None
+        """
         surface.fill(config.COLOR_BACKGROUND)
         cx, cy, zoom = in_game_scene.cam_x, in_game_scene.cam_y, in_game_scene.zoom
         
@@ -339,25 +695,60 @@ class GameGraphics:
         
         self.draw_level(surface, in_game_scene.level, cx, cy, zoom)
 
+        if self.tower_menu is not None and self.tower_menu.tower is None and self.tower_menu.build_tile_center is not None:
+            wx, wy = self.tower_menu.build_tile_center
+            px = int(wx * zoom + cx)
+            py = int(wy * zoom + cy)
+            tile_sz = int(config.TILE_SIZE * zoom)
+            pygame.draw.rect(surface, (255, 255, 100), (px - tile_sz // 2, py - tile_sz // 2, tile_sz, tile_sz), max(1, int(3 * zoom)))
+
+        mx, my = pygame.mouse.get_pos()
+        upgrading_tower = None
+        upgrade_data = None
+        
+        if self.tower_menu is not None and self.tower_menu.tower is not None:
+            if self.tower_menu.tower.upgrade_level < len(self.tower_menu.tower.upgrades):
+                if hasattr(self.tower_menu, 'upgrade_btn') and self.tower_menu.upgrade_btn.collidepoint(mx, my):
+                    upgrading_tower = self.tower_menu.tower
+                    upgrade_data = upgrading_tower.upgrades[upgrading_tower.upgrade_level]["stats"]
+
         for tower in in_game_scene.towers:
-            self.draw_tower_effects(surface, tower, cx, cy, zoom)
+            tower_upg_data = upgrade_data if tower == upgrading_tower else None
+            self.draw_tower_effects(surface, tower, cx, cy, zoom, tower_upg_data)
         
         all_entities = in_game_scene.towers + in_game_scene.enemies + in_game_scene.projectiles
         sorted_entities = quick_sort(all_entities, key = lambda e: (e.y, e.x))
+        selected_e = in_game_scene.selected_entity
         for entity in sorted_entities:
+            is_selected = (entity == selected_e)
             if hasattr(entity, "firerate"):
-                self.draw_tower(surface, entity, cx, cy, zoom)
+                self.draw_tower(surface, entity, cx, cy, zoom, is_selected)
             elif hasattr(entity, "health"):
-                self.draw_enemy(surface, entity, cx, cy, zoom)
+                self.draw_enemy(surface, entity, cx, cy, zoom, is_selected)
             else:
                 self.draw_projectile(surface, entity, cx, cy, zoom)
 
         self.resource_menu.draw(surface, in_game_scene.game_manager, in_game_scene, self.wave_button)
-        self.inspect_menu.draw(surface, in_game_scene.game_manager, in_game_scene.selected_entity)
+        self.inspect_menu.draw(surface, in_game_scene.game_manager, in_game_scene.selected_entity, upgrade_data)
+
         if self.tower_menu is not None:
-            self.tower_menu.draw(surface, in_game_scene.game_manager.ui_font)
+            mx, my = pygame.mouse.get_pos()
+            cx, cy, zoom = in_game_scene.cam_x, in_game_scene.cam_y, in_game_scene.zoom
+            self.tower_menu.draw(surface, in_game_scene.game_manager.ui_font, mx, my, cx, cy, zoom)
 
     def draw_save_menu(self, surface, game_manager, save_data, deleting_slot):
+        """
+        Renders the save selection interface, including populated slots and deletion confirmations.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance.
+            save_data (list): A list containing metadata for up to 3 save slots.
+            deleting_slot (int or None): The index of the slot pending deletion confirmation.
+            
+        Returns:
+            None
+        """
         surface.fill(config.COLOR_BACKGROUND)
         title = game_manager.font.render("SELECT SAVE SLOT", True, (255, 255, 255))
         surface.blit(title, (config.WINDOW_WIDTH / 2 - title.get_width() / 2, get_val_y(80)))
@@ -403,6 +794,16 @@ class GameGraphics:
             surface.blit(no_txt, (self.confirm_no.centerx - no_txt.get_width() / 2, self.confirm_no.centery - no_txt.get_height() / 2))
 
     def draw_start_menu(self, surface, game_manager):
+        """
+        Renders the initial game landing screen and core title graphics.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance.
+            
+        Returns:
+            None
+        """
         surface.fill(config.COLOR_BACKGROUND)
         game_title = game_manager.font.render("LEGENDA LEGIONIS LUNAE", True, (255, 255, 255))
         surface.blit(game_title, (config.WINDOW_WIDTH / 2 - game_title.get_width() / 2, config.WINDOW_HEIGHT / 2 - game_title.get_height() / 2))
@@ -415,6 +816,16 @@ class GameGraphics:
         surface.blit(quit_txt, (self.start_quit_btn.centerx - quit_txt.get_width() / 2, self.start_quit_btn.centery - quit_txt.get_height() / 2))
 
     def draw_main_menu(self, surface, game_manager):
+        """
+        Renders the level selection map, connecting nodes visually based on unlock progression.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance containing progress state.
+            
+        Returns:
+            None
+        """
         surface.fill(config.COLOR_BACKGROUND)
         
         scene = game_manager.current_scene
@@ -453,6 +864,17 @@ class GameGraphics:
         surface.blit(back_txt, (self.main_back_btn.centerx - back_txt.get_width() / 2, self.main_back_btn.centery - back_txt.get_height() / 2))
     
     def draw_pause_menu(self, surface, game_manager, previous_scene):
+        """
+        Renders a semi-transparent pause overlay and options on top of the active gameplay.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance.
+            previous_scene (Scene): The active gameplay scene to be drawn underneath the overlay.
+            
+        Returns:
+            None
+        """
         previous_scene.draw(surface)
         overlay = pygame.Surface((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
         overlay.set_alpha(150)
@@ -478,6 +900,17 @@ class GameGraphics:
         surface.blit(text_right, (self.pause_btn_right.centerx - text_right.get_width() / 2, self.pause_btn_right.centery - text_right.get_height() / 2))
 
     def draw_defeat_menu(self, surface, game_manager, previous_scene):
+        """
+        Renders the game over screen displaying defeat options.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance.
+            previous_scene (Scene): The scene context directly prior to defeat.
+            
+        Returns:
+            None
+        """
         previous_scene.draw(surface)
         overlay = pygame.Surface((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
         overlay.set_alpha(150)
@@ -499,6 +932,17 @@ class GameGraphics:
         surface.blit(text_right, (self.dv_btn_right.centerx - text_right.get_width() / 2, self.dv_btn_right.centery - text_right.get_height() / 2))
 
     def draw_victory_menu(self, surface, game_manager, previous_scene):
+        """
+        Renders the victory screen upon successful completion of a level.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            game_manager (GameManager): The global manager instance.
+            previous_scene (Scene): The gameplay scene context where victory occurred.
+            
+        Returns:
+            None
+        """
         previous_scene.draw(surface)
         overlay = pygame.Surface((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
         overlay.set_alpha(150)

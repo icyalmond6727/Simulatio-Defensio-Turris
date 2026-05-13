@@ -2,7 +2,22 @@ import pygame
 import config
 
 class Scene:
+    """
+    Abstract base class for all game states (menus, gameplay).
+    Provides core functionalities for 2D camera operations, including panning, zooming, 
+    and translating screen coordinates to world coordinates.
+    """
     def __init__(self, game_manager):
+        """
+        Initializes the scene, establishing camera boundaries and minimum zoom 
+        to prevent exposing areas outside the world dimensions.
+        
+        Args:
+            game_manager (GameManager): The central game manager instance.
+            
+        Returns:
+            None
+        """
         self.game_manager = game_manager
         
         self.world_width = config.WORLD_WIDTH
@@ -21,11 +36,29 @@ class Scene:
         self.clamp_camera()
 
     def screen_to_world(self, sx, sy):
+        """
+        Converts hardware screen pixel coordinates to logical in-game world coordinates
+        based on the current camera translation and zoom factor.
+        
+        Args:
+            sx (float): Screen X coordinate.
+            sy (float): Screen Y coordinate.
+            
+        Returns:
+            tuple: (world_x, world_y) representing coordinates in the game world.
+        """
         wx = (sx - self.cam_x) / self.zoom
         wy = (sy - self.cam_y) / self.zoom
         return wx, wy
 
     def clamp_camera(self):
+        """
+        Constrains the camera's x and y translation to ensure the viewport 
+        never pans beyond the defined boundaries of the game world.
+        
+        Returns:
+            None
+        """
         scaled_w = self.world_width * self.zoom
         scaled_h = self.world_height * self.zoom
 
@@ -40,6 +73,16 @@ class Scene:
             self.cam_y = max(config.WINDOW_HEIGHT - scaled_h, min(self.cam_y, 0))
 
     def handle_interaction(self, interaction):
+        """
+        Processes standard mouse inputs for camera panning (right-click drag) 
+        and zooming (scroll wheel). Can be overridden by child classes for scene-specific logic.
+        
+        Args:
+            interaction (pygame.event.Event): The Pygame event payload.
+            
+        Returns:
+            None
+        """
         if interaction.type == pygame.MOUSEWHEEL:
             mx, my = pygame.mouse.get_pos()
             wx, wy = self.screen_to_world(mx, my)
@@ -66,7 +109,22 @@ class Scene:
             self.clamp_camera()
 
     def update(self):
+        """
+        Logical update tick. Meant to be overridden by child scene classes.
+        
+        Returns:
+            None
+        """
         pass
 
     def draw(self, surface):
+        """
+        Rendering function. Meant to be overridden by child scene classes.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+            
+        Returns:
+            None
+        """
         pass

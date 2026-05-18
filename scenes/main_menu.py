@@ -1,7 +1,5 @@
 import pygame
-
 from graphics.ui.menus import MainMenuUI
-
 from scenes.scene import Scene
 
 class MainMenu(Scene):
@@ -9,15 +7,13 @@ class MainMenu(Scene):
     Represents the main level selection map.
     Allows the player to choose a stage to play based on their current progress.
     """
+    
     def __init__(self, game_manager):
         """
         Initializes the main menu scene state.
         
         Args:
             game_manager (GameManager): The global manager instance.
-            
-        Returns:
-            None
         """
         super().__init__(game_manager)
         self.ui = MainMenuUI()
@@ -28,9 +24,6 @@ class MainMenu(Scene):
         
         Args:
             interaction (pygame.event.Event): The Pygame event payload.
-            
-        Returns:
-            None
         """
         super().handle_interaction(interaction)
         
@@ -62,8 +55,5 @@ class MainMenu(Scene):
         
         Args:
             surface (pygame.Surface): The rendering target.
-            
-        Returns:
-            None
         """
         self.ui.draw(surface, self.game_manager.unlocked_levels, self.cam_x, self.cam_y, self.zoom)

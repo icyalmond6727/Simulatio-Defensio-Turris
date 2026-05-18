@@ -1,11 +1,20 @@
 import pygame
-
 from graphics.ui.menus import DatabaseMenuUI
-
 from scenes.scene import Scene
 
 class DatabaseMenu(Scene):
+    """
+    Controller for the database menu, displaying unlocked towers and encountered enemies.
+    """
+    
     def __init__(self, game_manager, previous_scene):
+        """
+        Initializes the database menu state.
+        
+        Args:
+            game_manager (GameManager): The global manager instance.
+            previous_scene (Scene): The scene to return to upon exiting.
+        """
         super().__init__(game_manager)
         self.previous_scene = previous_scene
         
@@ -15,10 +24,17 @@ class DatabaseMenu(Scene):
         self.ui = DatabaseMenuUI(unlocked_towers, encountered_enemies)
         
         self.selected_item = None
+        
         if self.ui.item_rects:
             self.selected_item = list(self.ui.item_rects.keys())[0]
 
     def handle_interaction(self, interaction):
+        """
+        Handles mouse and keyboard interactions within the database menu.
+        
+        Args:
+            interaction (pygame.event.Event): The Pygame event payload.
+        """
         if interaction.type == pygame.KEYDOWN and interaction.key == pygame.K_ESCAPE:
             self.game_manager.event_bus.emit("ui_click")
             self.game_manager.change_scene(self.previous_scene)
@@ -40,14 +56,24 @@ class DatabaseMenu(Scene):
             if self.ui.list_area_rect.collidepoint(x, y):
                 for name, (itype, rect) in self.ui.item_rects.items():
                     scrolled_rect = rect.move(0, self.ui.scroll_y)
+                    
                     if scrolled_rect.collidepoint(x, y):
                         self.selected_item = name
                         self.game_manager.event_bus.emit("ui_click")
                         break
 
     def update(self):
+        """
+        Halts game logic updates.
+        """
         pass
 
     def draw(self, surface):
+        """
+        Requests the graphics system to render the database overlay.
+        
+        Args:
+            surface (pygame.Surface): The rendering target.
+        """
         self.previous_scene.draw(surface)
         self.ui.draw(surface, self.selected_item)

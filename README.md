@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.1] - 2026-05-19
+### Misc
+- Code refactoring
+
 ## [v0.4.0] - 2026-05-19
 ### Added
 - Enemy information pop-up when encountering a new enemy

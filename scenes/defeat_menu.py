@@ -1,7 +1,5 @@
 import pygame
-
 from graphics.ui.popups import DefeatMenuUI
-
 from scenes.scene import Scene
 
 class DefeatMenu(Scene):
@@ -9,6 +7,7 @@ class DefeatMenu(Scene):
     Represents the game over screen triggered when player lives reach zero.
     Provides options to retry the current level or retreat to the main menu.
     """
+    
     def __init__(self, game_manager, previous_scene):
         """
         Initializes the defeat menu state.
@@ -16,9 +15,6 @@ class DefeatMenu(Scene):
         Args:
             game_manager (GameManager): The global manager instance.
             previous_scene (Scene): The gameplay scene where the defeat occurred.
-            
-        Returns:
-            None
         """
         super().__init__(game_manager)
         self.previous_scene = previous_scene
@@ -31,9 +27,6 @@ class DefeatMenu(Scene):
         
         Args:
             interaction (pygame.event.Event): The Pygame event payload.
-            
-        Returns:
-            None
         """
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
@@ -51,9 +44,6 @@ class DefeatMenu(Scene):
     def update(self):
         """
         Halts further game logic updates.
-        
-        Returns:
-            None
         """
         pass
 
@@ -63,9 +53,6 @@ class DefeatMenu(Scene):
         
         Args:
             surface (pygame.Surface): The rendering target.
-            
-        Returns:
-            None
         """
         self.previous_scene.draw(surface)
         self.ui.draw(surface)

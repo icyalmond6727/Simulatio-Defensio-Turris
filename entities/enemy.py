@@ -1,14 +1,12 @@
-import pygame
-
 import config
-
 from entities.entity_data import ENEMIES
 
 class Enemy:
     """
     Represents an enemy unit moving along a predefined path towards the base.
-    Handles movement, health tracking, and rendering.
+    Handles movement, health tracking, and rendering logic.
     """
+    
     def __init__(self, name, path):
         """
         Initializes the enemy with stats from entity_data and calculates its movement path.
@@ -17,9 +15,6 @@ class Enemy:
         Args:
             name (str): The identifier name of the enemy to look up its base stats.
             path (list of tuples): A list of (x, y) coordinates representing the path nodes.
-            
-        Returns:
-            None
         """
         self.__dict__.update(ENEMIES[name])
         self.current_health = self.health
@@ -33,6 +28,7 @@ class Enemy:
 
         dx = self.path[0][0] - self.path[1][0]
         dy = self.path[0][1] - self.path[1][1]
+        
         if dx != 0:
             direction = 1 if dx > 0 else -1
             self.path.insert(0, (self.path[0][0] + offset * direction, self.path[0][1]))
@@ -42,6 +38,7 @@ class Enemy:
         
         dx = self.path[-1][0] - self.path[-2][0]
         dy = self.path[-1][1] - self.path[-2][1]
+        
         if dx != 0:
             direction = 1 if dx > 0 else -1
             self.path.append((self.path[-1][0] + offset * direction, self.path[-1][1]))
@@ -60,7 +57,7 @@ class Enemy:
     def get_progress(self):
         """
         Calculates the exact distance the enemy has traveled along the path.
-        Useful for targeting priorities (e.g., targeting the enemy furthest along).
+        Useful for targeting priorities.
         
         Returns:
             float: The total distance traveled in pixels.
@@ -71,15 +68,13 @@ class Enemy:
         """
         Updates the enemy's position by moving it towards the next path node based on its current speed.
         Also checks for death conditions or if it has reached the end of the path.
-        
-        Returns:
-            None
         """
         if self.current_health <= 0:
             self.killed = True
             return
         
         total_move = self.current_speed
+        
         while total_move > 0 and self.path_index < len(self.path) - 1:
             target_x, target_y = self.path[self.path_index + 1]
             
@@ -101,22 +96,6 @@ class Enemy:
 
             if (self.x, self.y) == (target_x, target_y):
                 self.path_index += 1
+                
                 if self.path_index == len(self.path) - 1:
                     self.ended = True
-            
-    def draw(self, surface):
-        """
-        Renders the enemy's bounding box and dynamic health bar.
-        
-        Args:
-            surface (pygame.Surface): The rendering surface (usually the unscaled world surface).
-            
-        Returns:
-            None
-        """
-        pygame.draw.rect(surface, self.color, (self.x - self.width / 2, self.y - self.height / 2, self.width, self.height))
-        
-        red_bar = self.width
-        green_bar = self.width * max(0, self.current_health / self.health)
-        pygame.draw.rect(surface, (255, 0, 0), (self.x - self.width / 2, self.y - self.height / 2 - 10, red_bar, 3))
-        pygame.draw.rect(surface, (0, 255, 0), (self.x - self.width / 2, self.y - self.height / 2 - 10, green_bar, 3))

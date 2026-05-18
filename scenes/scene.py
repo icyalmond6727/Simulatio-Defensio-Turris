@@ -7,6 +7,7 @@ class Scene:
     Provides core functionalities for 2D camera operations, including panning, zooming, 
     and translating screen coordinates to world coordinates.
     """
+    
     def __init__(self, game_manager):
         """
         Initializes the scene, establishing camera boundaries and minimum zoom 
@@ -14,9 +15,6 @@ class Scene:
         
         Args:
             game_manager (GameManager): The central game manager instance.
-            
-        Returns:
-            None
         """
         self.game_manager = game_manager
         
@@ -45,19 +43,17 @@ class Scene:
             sy (float): Screen Y coordinate.
             
         Returns:
-            tuple: (world_x, world_y) representing coordinates in the game world.
+            tuple: The (world_x, world_y) representing coordinates in the game world.
         """
         wx = (sx - self.cam_x) / self.zoom
         wy = (sy - self.cam_y) / self.zoom
+        
         return wx, wy
 
     def clamp_camera(self):
         """
         Constrains the camera's x and y translation to ensure the viewport 
         never pans beyond the defined boundaries of the game world.
-        
-        Returns:
-            None
         """
         scaled_w = self.world_width * self.zoom
         scaled_h = self.world_height * self.zoom
@@ -74,14 +70,10 @@ class Scene:
 
     def handle_interaction(self, interaction):
         """
-        Processes standard mouse inputs for camera panning (right-click drag) 
-        and zooming (scroll wheel). Can be overridden by child classes for scene-specific logic.
+        Processes standard mouse inputs for camera panning and zooming.
         
         Args:
             interaction (pygame.event.Event): The Pygame event payload.
-            
-        Returns:
-            None
         """
         if interaction.type == pygame.MOUSEWHEEL:
             mx, my = pygame.mouse.get_pos()
@@ -98,8 +90,10 @@ class Scene:
         elif interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 3:
             self.is_dragging = True
             self.last_mouse_pos = interaction.pos
+            
         elif interaction.type == pygame.MOUSEBUTTONUP and interaction.button == 3:
             self.is_dragging = False
+            
         elif interaction.type == pygame.MOUSEMOTION and self.is_dragging:
             dx = interaction.pos[0] - self.last_mouse_pos[0]
             dy = interaction.pos[1] - self.last_mouse_pos[1]
@@ -111,9 +105,6 @@ class Scene:
     def update(self):
         """
         Logical update tick. Meant to be overridden by child scene classes.
-        
-        Returns:
-            None
         """
         pass
 
@@ -123,8 +114,5 @@ class Scene:
         
         Args:
             surface (pygame.Surface): The rendering target.
-            
-        Returns:
-            None
         """
         pass

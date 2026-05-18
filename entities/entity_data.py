@@ -4,18 +4,16 @@ This decouples data from logic, allowing for easy balancing and modding.
 """
 import config
 
-"""
-TOWERS:
-    - width/height    : pixels
-    - range           : pixels
-    - damage          : total damage dealt during damage_duration
-    - firerate        : shots per frame
-    - bullet_speed    : pixels per frame
-    - damage_duration : frames
-    - damage_type     : kinetic/thermal
-    - gold_cost       : gold cost to build the tower
-    - color           : RGB tuple
-"""
+# TOWERS:
+# width/height    : pixels
+# range           : pixels
+# damage          : total damage dealt during damage_duration
+# firerate        : shots per frame
+# bullet_speed    : pixels per frame
+# damage_duration : frames
+# damage_type     : kinetic/thermal
+# gold_cost       : gold cost to build the tower
+# color           : RGB tuple
 
 TOWERS = {
     "Coilgun": {
@@ -71,17 +69,15 @@ TOWERS = {
     }
 }
 
-"""
-ENEMIES:
-    - width/height       : pixels
-    - health             : total damage taken before defeated
-    - speed              : pixels per frame
-    - kinetic_resistance : reduction multiplier in kinetic damage
-    - thermal_resistance : reduction multiplier in thermal damage
-    - gold_yield         : gold gained for defeating the enemy
-    - lives_penalty      : lives lost for letting the enemy pass
-    - color              : RGB tuple
-"""
+# ENEMIES:
+# width/height       : pixels
+# health             : total damage taken before defeated
+# speed              : pixels per frame
+# kinetic_resistance : reduction multiplier in kinetic damage
+# thermal_resistance : reduction multiplier in thermal damage
+# gold_yield         : gold gained for defeating the enemy
+# lives_penalty      : lives lost for letting the enemy pass
+# color              : RGB tuple
 
 ENEMIES = {
     "Scout Drone": {

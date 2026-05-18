@@ -1,5 +1,7 @@
 import pygame
 
+from graphics.ui.popups import DefeatMenuUI
+
 from scenes.scene import Scene
 
 class DefeatMenu(Scene):
@@ -20,6 +22,8 @@ class DefeatMenu(Scene):
         """
         super().__init__(game_manager)
         self.previous_scene = previous_scene
+        self.ui = DefeatMenuUI()
+        self.game_manager.event_bus.emit("defeat")
 
     def handle_interaction(self, interaction):
         """
@@ -33,13 +37,14 @@ class DefeatMenu(Scene):
         """
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
-            gfx = self.game_manager.graphics
 
-            if gfx.dv_btn_left.collidepoint(x, y):
+            if self.ui.restart_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.in_game import InGame
                 self.game_manager.change_scene(InGame(self.game_manager, self.previous_scene.level_index))
 
-            elif gfx.dv_btn_right.collidepoint(x, y):
+            elif self.ui.main_menu_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.main_menu import MainMenu
                 self.game_manager.change_scene(MainMenu(self.game_manager))
 
@@ -62,4 +67,5 @@ class DefeatMenu(Scene):
         Returns:
             None
         """
-        self.game_manager.graphics.draw_defeat_menu(surface, self.game_manager, self.previous_scene)
+        self.previous_scene.draw(surface)
+        self.ui.draw(surface)

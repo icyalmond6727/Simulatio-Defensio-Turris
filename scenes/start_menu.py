@@ -1,6 +1,8 @@
 import pygame
 import sys
 
+from graphics.ui.menus import StartMenuUI
+
 from scenes.scene import Scene
 
 class StartMenu(Scene):
@@ -19,6 +21,7 @@ class StartMenu(Scene):
             None
         """
         super().__init__(game_manager)
+        self.ui = StartMenuUI()
     
     def handle_interaction(self, interaction):
         """
@@ -33,10 +36,12 @@ class StartMenu(Scene):
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
             
-            if self.game_manager.graphics.start_quit_btn.collidepoint(x, y):
+            if self.ui.quit_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 pygame.quit()
                 sys.exit()
             else:
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.save_menu import SaveMenu
                 self.game_manager.change_scene(SaveMenu(self.game_manager))
 
@@ -50,4 +55,4 @@ class StartMenu(Scene):
         Returns:
             None
         """
-        self.game_manager.graphics.draw_start_menu(surface, self.game_manager)
+        self.ui.draw(surface)

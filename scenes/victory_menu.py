@@ -1,5 +1,9 @@
 import pygame
 
+from graphics.ui.popups import VictoryMenuUI
+
+from level.level_data import LEVELS, LEVEL_EDGES
+
 from scenes.scene import Scene
 
 class VictoryMenu(Scene):
@@ -20,9 +24,30 @@ class VictoryMenu(Scene):
         """
         super().__init__(game_manager)
         self.previous_scene = previous_scene
+        self.ui = VictoryMenuUI()
+        self.game_manager.event_bus.emit("victory")
         
-        if self.previous_scene.level_index == self.game_manager.unlocked_level:
-            self.game_manager.unlocked_level += 1
+        played_level = self.previous_scene.level_index
+        adjacent_levels = []
+        for u, v in LEVEL_EDGES:
+            if u == played_level:
+                adjacent_levels.append(v)
+            elif v == played_level:
+                adjacent_levels.append(u)
+                
+        new_unlocks = False
+        for nxt in adjacent_levels:
+            if nxt not in self.game_manager.unlocked_levels:
+                self.game_manager.unlocked_levels.append(nxt)
+                new_unlocks = True
+                
+                if nxt in LEVELS:
+                    new_towers = LEVELS[nxt].get("towers", [])
+                    for t in new_towers:
+                        if t not in self.game_manager.unlocked_towers:
+                            self.game_manager.unlocked_towers.append(t)
+                            
+        if new_unlocks:
             self.game_manager.save_progress()
 
     def handle_interaction(self, interaction):
@@ -37,13 +62,14 @@ class VictoryMenu(Scene):
         """
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
-            gfx = self.game_manager.graphics
 
-            if gfx.dv_btn_left.collidepoint(x, y):
+            if self.ui.restart_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.in_game import InGame
                 self.game_manager.change_scene(InGame(self.game_manager, self.previous_scene.level_index))
 
-            elif gfx.dv_btn_right.collidepoint(x, y):
+            elif self.ui.continue_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.main_menu import MainMenu
                 self.game_manager.change_scene(MainMenu(self.game_manager))
 
@@ -66,4 +92,5 @@ class VictoryMenu(Scene):
         Returns:
             None
         """
-        self.game_manager.graphics.draw_victory_menu(surface, self.game_manager, self.previous_scene)
+        self.previous_scene.draw(surface)
+        self.ui.draw(surface)

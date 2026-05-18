@@ -3,14 +3,14 @@ A custom implementation of the Quick Sort algorithm utilizing the 'Median of Thr
 pivot selection method to mitigate worst-case O(N^2) scenarios, ensuring a stable O(N log N) average time complexity.
 Used heavily for z-index sorting in the graphics pipeline.
 """
+
 def quick_sort(arr, key = lambda x: x):
     """
     Sorts an array in-place using a recursive Quick Sort algorithm.
     
     Args:
         arr (list): The list of elements to sort.
-        key (callable, optional): A function to extract a comparison key from each element.
-                                  Defaults to the identity function.
+        key (callable, optional): A function to extract a comparison key from each element. Defaults to identity.
                                   
     Returns:
         list: A new, sorted copy of the input array.

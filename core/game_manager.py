@@ -1,8 +1,7 @@
-import pygame
-
-from core.graphics_system import GameGraphics
-import core.save_manager as save_manager
-
+import core.save_system as save_system
+from core.sound_manager import SoundManager
+from core.event_bus import EventBus
+from level.level_data import LEVELS
 from scenes.start_menu import StartMenu
 
 class GameManager:
@@ -10,24 +9,22 @@ class GameManager:
     Central controller for the game state, UI rendering, and scene transitions.
     Manages global assets, graphics systems, and save slots.
     """
+    
     def __init__(self):
         """
         Initializes Pygame fonts, the graphics wrapper, and the initial game state.
         Sets the starting scene to the StartMenu.
-        
-        Returns:
-            None
         """
-        pygame.font.init()
-        self.font = pygame.font.SysFont('Arial', 24, bold = True)
-        self.ui_font = pygame.font.SysFont('Arial', 14, bold = True)
-        self.graphics = GameGraphics()
+        self.event_bus = EventBus()
+        self.sound_manager = SoundManager(self.event_bus)
 
         self.current_save_slot = None
-        self.unlocked_level = 1
+        self.unlocked_levels = [1]
+        self.encountered_enemies = []
+        self.unlocked_towers = []
 
         self.current_scene = StartMenu(self)
-
+    
     def load_save_slot(self, slot_index):
         """
         Loads user progress from a specified save slot. 
@@ -35,28 +32,35 @@ class GameManager:
         
         Args:
             slot_index (int): The index of the save slot to load.
-            
-        Returns:
-            None
         """
         self.current_save_slot = slot_index
-        data = save_manager.load_slot(slot_index)
+        data = save_system.load_slot(slot_index)
+        
         if data:
-            self.unlocked_level = data.get("unlocked_level", 1)
+            self.unlocked_levels = data.get("unlocked_levels", [1])
+            
+            if "unlocked_level" in data and "unlocked_levels" not in data:
+                self.unlocked_levels = list(range(1, data["unlocked_level"] + 1))
+                
+            self.encountered_enemies = data.get("encountered_enemies", [])
+            self.unlocked_towers = data.get("unlocked_towers", [])
         else:
-            self.unlocked_level = 1
+            self.unlocked_levels = [1]
+            self.encountered_enemies = []
+            self.unlocked_towers = LEVELS[1].get("towers", []).copy()
             self.save_progress()
 
     def save_progress(self):
         """
-        Saves the current unlocked level to the active save slot on the disk.
-        
-        Returns:
-            None
+        Saves the current progression state to the active save slot on the disk.
         """
         if self.current_save_slot is not None:
-            data = {"unlocked_level": self.unlocked_level}
-            save_manager.save_slot(self.current_save_slot, data)
+            data = {
+                "unlocked_levels": self.unlocked_levels,
+                "encountered_enemies": self.encountered_enemies,
+                "unlocked_towers": self.unlocked_towers
+            }
+            save_system.save_slot(self.current_save_slot, data)
 
     def change_scene(self, new_scene):
         """
@@ -64,9 +68,6 @@ class GameManager:
         
         Args:
             new_scene (Scene): The instantiated scene object to switch to.
-            
-        Returns:
-            None
         """
         self.current_scene = new_scene
     
@@ -76,18 +77,12 @@ class GameManager:
         
         Args:
             interaction (pygame.event.Event): The input event triggered by the user.
-            
-        Returns:
-            None
         """
         self.current_scene.handle_interaction(interaction)
     
     def update(self):
         """
         Delegates the logical update tick to the currently active scene.
-        
-        Returns:
-            None
         """
         self.current_scene.update()
     
@@ -97,8 +92,5 @@ class GameManager:
         
         Args:
             surface (pygame.Surface): The main display surface to render the game onto.
-            
-        Returns:
-            None
         """
         self.current_scene.draw(surface)

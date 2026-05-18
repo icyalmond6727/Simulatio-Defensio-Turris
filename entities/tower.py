@@ -1,10 +1,6 @@
-import pygame
-
 import config
-
 from entities.entity_data import TOWERS
 import entities.projectile as projectile
-
 import utils.math_processor as math_processor
 
 class Tower:
@@ -12,6 +8,7 @@ class Tower:
     Represents a defensive structure placed by the player.
     Handles targeting logic, cooldowns, and scheduling damage/projectile events based on predictive aiming.
     """
+    
     def __init__(self, name, x, y):
         """
         Initializes the tower with base stats from entity_data and its grid position.
@@ -20,9 +17,6 @@ class Tower:
             name (str): The identifier name of the tower.
             x (float): Center x-coordinate of the tower.
             y (float): Center y-coordinate of the tower.
-            
-        Returns:
-            None
         """
         self.__dict__.update(TOWERS[name])
         self.x = x
@@ -45,9 +39,6 @@ class Tower:
     def upgrade(self):
         """
         Applies the next available upgrade tier to the tower's current stats using dynamic attribute mapping.
-        
-        Returns:
-            None
         """
         if self.upgrade_level < len(self.upgrades):
             upgrade_data = self.upgrades[self.upgrade_level]
@@ -60,7 +51,7 @@ class Tower:
                 
             self.upgrade_level += 1
 
-    def update(self, enemies, projectiles, current_frame, event_heap):
+    def update(self, enemies, projectiles, current_frame, event_heap, event_bus):
         """
         Evaluates potential targets, calculates interception vectors, and schedules attacks if not on cooldown.
         
@@ -69,20 +60,20 @@ class Tower:
             projectiles (list): List of active Projectile instances to append new shots to.
             current_frame (int): The current game tick/frame.
             event_heap (EventHeap): The custom min-heap to schedule future damage events.
-            
-        Returns:
-            None
+            event_bus (EventBus): The event bus to emit sound triggers.
         """
-        if (self.cooldown > 0):
+        if self.cooldown > 0:
             self.cooldown -= 1
 
         self.target = None
+        
         for enemy in enemies:
             if math_processor.get_distance(self.x, self.y, enemy.x, enemy.y) <= self.current_range:
-                if self.target == None:
+                if self.target is None:
                     self.target = enemy
                     continue
-                if self.resistance_priority == None:
+                    
+                if self.resistance_priority is None:
                     if getattr(enemy, self.priority) > getattr(self.target, self.priority):
                         self.target = enemy
                 else:
@@ -95,7 +86,6 @@ class Tower:
         if self.target is not None and self.cooldown <= 0:
             total_base_damage = self.current_damage * (1 - getattr(self.target, self.damage_type + "_resistance"))
             N = self.current_damage_duration
-            
             W = (N * (N + 1) * (N + 2)) / 3
 
             if self.current_bullet_speed == 0:
@@ -106,10 +96,12 @@ class Tower:
                     event_heap.push((current_frame + frames_to_hit + t - 1, "damage", (self.target, damage_at_t)))
                 
                 projectiles.append(projectile.Beam(self.x, self.y, self.target, N, self.color))
+                event_bus.emit("lasergun_fire")
                 
                 self.cooldown = config.FPS / self.current_firerate
             else:
                 interception = math_processor.get_interception(self, self.target)
+                
                 if interception is not None:
                     hit_x, hit_y, frames_to_hit = interception
                     
@@ -118,31 +110,10 @@ class Tower:
                         event_heap.push((current_frame + frames_to_hit + t - 1, "damage", (self.target, damage_at_t)))
                         
                     projectiles.append(projectile.Projectile(self.current_bullet_speed, self.x, self.y, hit_x, hit_y))
+
+                    if self.name == "Coilgun":
+                        event_bus.emit("coilgun_fire")
+                    elif self.name == "Railgun":
+                        event_bus.emit("railgun_fire")
+
                     self.cooldown = config.FPS / self.current_firerate
-
-    def draw_effects(self, surface):
-        """
-        Draws visual aids like the tower's range radius and a line to its current target.
-        
-        Args:
-            surface (pygame.Surface): The unscaled rendering surface.
-            
-        Returns:
-            None
-        """
-        pygame.draw.circle(surface, (255, 255, 255), (self.x, self.y), self.current_range, 1)
-
-        if self.target is not None:
-            pygame.draw.line(surface, (155, 155, 155), (self.x, self.y), (self.target.x, self.target.y), 2)
-
-    def draw(self, surface):
-        """
-        Renders the static base shape of the tower.
-        
-        Args:
-            surface (pygame.Surface): The unscaled rendering surface.
-            
-        Returns:
-            None
-        """
-        pygame.draw.rect(surface, self.color, (self.x - self.width / 2, self.y - self.height / 2, self.width, self.height))

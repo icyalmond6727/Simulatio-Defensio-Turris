@@ -1,11 +1,39 @@
 """
-A static configuration file defining the parameters of every level in the game.
-Includes UI button coordinates, grid paths, buildable locations, starting resources, 
-and precise enemy spawn wave scheduling.
+Defines the spatial coordinates, paths, buildable tiles, and wave configurations for all levels.
 """
+
+LEVEL_EDGES = [
+    (1, 2), (2, 3), (2, 4),
+    (4, 5), (5, 6), (5, 7), (5, 8), (4, 7),
+    (7, 9), (9, 10), (10, 11), (11, 12), (12, 7),
+    (8, 13), (12, 13), (13, 14), (14, 15),
+    (6, 16), (16, 17), (17, 18), (18, 19), (19, 16), (19, 8),
+    (18, 20), (20, 21),
+    (8, 22), (14, 22), (22, 23), (23, 24), (24, 22), (20, 24)
+]
+
+LEVEL_COORDS = {
+    1: (50, 300), 2: (250, 200), 3: (400, 50), 4: (450, 350), 
+    5: (650, 350), 6: (750, 150), 7: (550, 450), 8: (800, 400), 
+    9: (250, 450), 10: (150, 600), 11: (350, 700), 12: (500, 550), 
+    13: (700, 550), 14: (850, 650), 15: (700, 750), 16: (1000, 150), 
+    17: (1250, 150), 18: (1250, 300), 19: (1050, 300), 20: (1500, 350), 
+    21: (1750, 200), 22: (1100, 450), 23: (1350, 650), 24: (1600, 500)
+}
+
+def create_empty_level(x, y):
+    """
+    Generates a blank template configuration dictionary for initialized levels.
+    """
+    return {
+        "level_button": (x, y, 50, 50), "path_tiles": [[]], "build_tiles": [], 
+        "wave_count": 5, "starting_gold": 200, "starting_lives": 20, 
+        "towers": ["Coilgun", "Lasergun", "Railgun"], "waves": [[], [], [], [], []]
+    }
+
 LEVELS = {
     1: {
-        "level_button": (150, 450, 50, 50),
+        "level_button": (LEVEL_COORDS[1][0], LEVEL_COORDS[1][1], 50, 50),
         "path_tiles": [
             [(0, 3), (24, 3), (24, 7), (5, 7), (5, 11), (29, 11)]
         ],
@@ -14,6 +42,7 @@ LEVELS = {
         ],
         "starting_gold": 100,
         "starting_lives": 20,
+        "towers": ["Coilgun", "Lasergun"],
         "wave_count": 5,
         "waves": [
             [("spawn", 0, "Scout Drone", 5, 60)],
@@ -22,41 +51,8 @@ LEVELS = {
             [("spawn", 0, "Light Attack Drone", 3, 120)],
             [("spawn", 0, "Heavy Attack Drone", 1, 60), ("delay", 60), ("spawn", 0, "Scout Drone", 15, 30)]
         ]
-    },
-    2: {
-        "level_button": (350, 500, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    3: {
-        "level_button": (550, 600, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    4: {
-        "level_button": (750, 500, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    5: {
-        "level_button": (1000, 600, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    6: {
-        "level_button": (950, 350, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    7: {
-        "level_button": (750, 250, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    8: {
-        "level_button": (550, 350, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    9: {
-        "level_button": (350, 250, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
-    },
-    10: {
-        "level_button": (150, 150, 50, 50),
-        "path_tiles": [[]], "build_tiles": [], "wave_count": 5, "starting_gold": 200, "starting_lives": 20, "waves": [[], [], [], [], []]
     }
 }
+
+for i in range(2, 25):
+    LEVELS[i] = create_empty_level(LEVEL_COORDS[i][0], LEVEL_COORDS[i][1])

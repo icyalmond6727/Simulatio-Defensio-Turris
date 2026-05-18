@@ -1,5 +1,7 @@
 import pygame
 
+from graphics.ui.popups import PauseMenuUI
+
 from scenes.scene import Scene
 
 class PauseMenu(Scene):
@@ -21,6 +23,7 @@ class PauseMenu(Scene):
         """
         super().__init__(game_manager)
         self.previous_scene = previous_scene
+        self.ui = PauseMenuUI()
 
     def handle_interaction(self, interaction):
         """
@@ -34,20 +37,27 @@ class PauseMenu(Scene):
             None
         """
         if interaction.type == pygame.KEYDOWN and interaction.key == pygame.K_ESCAPE:
+            self.game_manager.event_bus.emit("ui_click")
             self.game_manager.change_scene(self.previous_scene)
 
         elif interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
-            gfx = self.game_manager.graphics
-
-            if gfx.pause_btn_left.collidepoint(x, y):
+            
+            if self.ui.restart_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.in_game import InGame
                 self.game_manager.change_scene(InGame(self.game_manager, self.previous_scene.level_index))
-            elif gfx.pause_btn_mid.collidepoint(x, y):
+            elif self.ui.main_menu_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 from scenes.main_menu import MainMenu
                 self.game_manager.change_scene(MainMenu(self.game_manager))
-            elif gfx.pause_btn_right.collidepoint(x, y):
+            elif self.ui.resume_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
                 self.game_manager.change_scene(self.previous_scene)
+            elif self.ui.database_btn.is_clicked(x, y):
+                self.game_manager.event_bus.emit("ui_click")
+                from scenes.database_menu import DatabaseMenu
+                self.game_manager.change_scene(DatabaseMenu(self.game_manager, self))
 
     def update(self):
         """
@@ -69,4 +79,5 @@ class PauseMenu(Scene):
         Returns:
             None
         """
-        self.game_manager.graphics.draw_pause_menu(surface, self.game_manager, self.previous_scene)
+        self.previous_scene.draw(surface)
+        self.ui.draw(surface)

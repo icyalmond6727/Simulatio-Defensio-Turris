@@ -1,3 +1,6 @@
+"""
+Implements the gameplay interruption state for introducing newly encountered enemies.
+"""
 import pygame
 from entities.entity_data import ENEMIES
 from graphics.ui.popups import NewEnemyMenuUI

@@ -1,3 +1,6 @@
+"""
+Defines behavior and states for projectiles and visual beam effects fired by towers.
+"""
 import utils.math_processor as math_processor
 
 class Projectile:

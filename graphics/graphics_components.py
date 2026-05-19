@@ -1,3 +1,6 @@
+"""
+Contains reusable graphical interface components and widgets.
+"""
 import pygame
 from graphics.graphics_utils import get_val_x
 
@@ -58,7 +61,8 @@ class UIButton:
         Checks if standard coordinates intersect with the button's hitbox.
         
         Args:
-            x, y (int): Screen coordinates.
+            x (int): Screen X coordinate.
+            y (int): Screen Y coordinate.
             
         Returns:
             bool: True if the coordinates are inside the button, False otherwise.

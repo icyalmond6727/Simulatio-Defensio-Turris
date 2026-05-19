@@ -1,3 +1,6 @@
+"""
+Handles the rendering of the game world grid, entities, and visual effects.
+"""
 import pygame
 import config
 import utils.math_processor as math_processor
@@ -11,14 +14,15 @@ class WorldRenderer:
     @staticmethod
     def draw_enemy(surface, enemy, cx, cy, zoom, is_selected = False):
         """
-        Draws the enemy graphic along with its health bar.
+        Draws an enemy unit and its health bar.
         
         Args:
             surface (pygame.Surface): The rendering target.
             enemy (Enemy): The enemy instance to draw.
-            cx, cy (float): Camera offsets.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera zoom factor.
-            is_selected (bool, optional): Whether to draw the selection highlight.
+            is_selected (bool, optional): Whether the enemy is currently selected by the player.
         """
         w = max(1, int(enemy.width * zoom))
         h = max(1, int(enemy.height * zoom))
@@ -26,7 +30,9 @@ class WorldRenderer:
         y = int(enemy.y * zoom + cy)
 
         if is_selected:
-            pygame.draw.rect(surface, (255, 255, 200), (x - w // 2 - max(1, int(2 * zoom)), y - h // 2 - max(1, int(2 * zoom)), w + max(2, int(4 * zoom)), h + max(2, int(4 * zoom))), max(1, int(2 * zoom)))
+            pad = max(2, int(4 * zoom))
+            thick = max(2, int(3 * zoom))
+            pygame.draw.rect(surface, config.C_WHITE, (x - w // 2 - pad, y - h // 2 - pad, w + pad * 2, h + pad * 2), thick)
         
         pygame.draw.rect(surface, enemy.color, (x - w // 2, y - h // 2, w, h))
 
@@ -35,18 +41,19 @@ class WorldRenderer:
         bar_y = y - h // 2 - max(1, int(10 * zoom))
         bar_h = max(1, int(3 * zoom))
         
-        pygame.draw.rect(surface, (255, 0, 0), (x - w // 2, bar_y, red_bar, bar_h))
-        pygame.draw.rect(surface, (0, 255, 0), (x - w // 2, bar_y, green_bar, bar_h))
+        pygame.draw.rect(surface, config.C_RED, (x - w // 2, bar_y, red_bar, bar_h))
+        pygame.draw.rect(surface, config.C_GREEN, (x - w // 2, bar_y, green_bar, bar_h))
 
     @staticmethod
     def draw_projectile(surface, projectile, cx, cy, zoom):
         """
-        Draws active projectiles or continuous beam effects.
+        Draws a projectile or a continuous beam.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            projectile (Projectile): The projectile to draw.
-            cx, cy (float): Camera offsets.
+            projectile (Projectile or Beam): The projectile instance to draw.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera zoom factor.
         """
         if hasattr(projectile, "target"):
@@ -60,46 +67,48 @@ class WorldRenderer:
         else:
             x = int(projectile.x * zoom + cx)
             y = int(projectile.y * zoom + cy)
-            pygame.draw.circle(surface, (255, 255, 0), (x, y), max(2, int(4 * zoom)))
+            pygame.draw.circle(surface, config.C_YELLOW, (x, y), max(2, int(4 * zoom)))
 
     @staticmethod
     def draw_tower_effects(surface, tower, cx, cy, zoom, upgrade_data = None):
         """
-        Draws the tower's targeting range indicator and visual lock-on laser.
+        Draws tower range indicators and targeting lines.
         
         Args:
             surface (pygame.Surface): The rendering target.
             tower (Tower): The tower instance.
-            cx, cy (float): Camera offsets.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera zoom factor.
-            upgrade_data (dict, optional): Stat modifiers for previewing upgrades.
+            upgrade_data (dict, optional): Stats mapping if the tower is currently being previewed for an upgrade.
         """
         x = int(tower.x * zoom + cx)
         y = int(tower.y * zoom + cy)
         
-        pygame.draw.circle(surface, (255, 255, 255), (x, y), max(1, int(tower.current_range * zoom)), max(1, int(1 * zoom)))
+        pygame.draw.circle(surface, config.C_WHITE, (x, y), max(1, int(tower.current_range * zoom)), max(1, int(1 * zoom)))
         
         if upgrade_data is not None:
             range_diff = upgrade_data.get("range", 0)
             new_range = tower.current_range + range_diff
-            pygame.draw.circle(surface, (0, 255, 0), (x, y), max(1, int(new_range * zoom)), max(1, int(2 * zoom)))
+            pygame.draw.circle(surface, config.C_GREEN, (x, y), max(1, int(new_range * zoom)), max(1, int(2 * zoom)))
             
         if tower.target is not None:
             tx = int(tower.target.x * zoom + cx)
             ty = int(tower.target.y * zoom + cy)
-            pygame.draw.line(surface, (155, 155, 155), (x, y), (tx, ty), max(1, int(2 * zoom)))
+            pygame.draw.line(surface, config.C_WHITE, (x, y), (tx, ty), max(2, int(3 * zoom)))
 
     @staticmethod
     def draw_tower(surface, tower, cx, cy, zoom, is_selected = False):
         """
-        Draws the physical representation of the tower.
+        Draws the physical tower structure.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            tower (Tower): The tower instance to draw.
-            cx, cy (float): Camera offsets.
+            tower (Tower): The tower instance.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera zoom factor.
-            is_selected (bool, optional): Whether to draw the selection highlight.
+            is_selected (bool, optional): Whether the tower is selected by the player.
         """
         w = max(1, int(tower.width * zoom))
         h = max(1, int(tower.height * zoom))
@@ -107,19 +116,22 @@ class WorldRenderer:
         y = int(tower.y * zoom + cy)
 
         if is_selected:
-            pygame.draw.rect(surface, (255, 255, 200), (x - w // 2 - max(1, int(2 * zoom)), y - h // 2 - max(1, int(2 * zoom)), w + max(2, int(4 * zoom)), h + max(2, int(4 * zoom))), max(1, int(2 * zoom)))
+            pad = max(2, int(4 * zoom))
+            thick = max(2, int(3 * zoom))
+            pygame.draw.rect(surface, config.C_WHITE, (x - w // 2 - pad, y - h // 2 - pad, w + pad * 2, h + pad * 2), thick)
 
         pygame.draw.rect(surface, tower.color, (x - w // 2, y - h // 2, w, h))
 
     @staticmethod
     def draw_level(surface, level, cx, cy, zoom):
         """
-        Draws the level geometry (paths and buildable tiles).
+        Draws the grid floor, pathing tiles, and buildable tiles.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            level (Level_Builder): The generated level geometry.
-            cx, cy (float): Camera offsets.
+            level (Level_Builder): The currently active level map.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera zoom factor.
         """
         tile_sz = int(config.TILE_SIZE * zoom) + 1
@@ -132,16 +144,16 @@ class WorldRenderer:
                 if col1 == col2:
                     for row in range(min(row1, row2), max(row1, row2) + 1):
                         wx, wy = math_processor.get_tile_center(col1, row, config.TILE_SIZE)
-                        pygame.draw.rect(surface, config.COLOR_PATH_TILE, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
+                        pygame.draw.rect(surface, config.C_BG_PANEL, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
                 
                 elif row1 == row2:
                     for col in range(min(col1, col2), max(col1, col2) + 1):
                         wx, wy = math_processor.get_tile_center(col, row1, config.TILE_SIZE)
-                        pygame.draw.rect(surface, config.COLOR_PATH_TILE, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
+                        pygame.draw.rect(surface, config.C_BG_PANEL, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
             
             if current_path_tiles:
                 wx, wy = math_processor.get_tile_center(current_path_tiles[-1][0], current_path_tiles[-1][1], config.TILE_SIZE)
-                pygame.draw.rect(surface, config.COLOR_PATH_TILE, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
+                pygame.draw.rect(surface, config.C_BG_PANEL, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
 
         for build_tile in level.build_tiles:
             wx, wy = math_processor.get_tile_center(build_tile[0], build_tile[1], config.TILE_SIZE)
@@ -150,14 +162,14 @@ class WorldRenderer:
     @staticmethod
     def render_world(surface, in_game_scene, upgrading_tower = None, upgrade_data = None, build_tile_center = None):
         """
-        Orchestrates the drawing sequence, sorting entities by Y-coordinate for proper Z-indexing depth perception.
+        Orchestrates the drawing sequence for the entire game world, handling z-indexing.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            in_game_scene (InGame): State holder for all entities.
-            upgrading_tower (Tower, optional): Contextual tower to preview upgrades for.
-            upgrade_data (dict, optional): Stat modifiers to preview.
-            build_tile_center (tuple, optional): Coordinate for highlighted tile.
+            in_game_scene (InGame): The active scene providing the state.
+            upgrading_tower (Tower, optional): The tower being previewed for an upgrade.
+            upgrade_data (dict, optional): Stats difference for the upgrade preview.
+            build_tile_center (tuple, optional): Center coordinates of the tile being hovered for building.
         """
         surface.fill(config.COLOR_BACKGROUND)
         cx, cy, zoom = in_game_scene.cam_x, in_game_scene.cam_y, in_game_scene.zoom
@@ -171,12 +183,12 @@ class WorldRenderer:
         for x_idx in range(config.COLS + 1):
             x = int(x_idx * config.TILE_SIZE * zoom + cx)
             if x >= config.WINDOW_WIDTH: x = config.WINDOW_WIDTH - 1
-            pygame.draw.line(surface, config.COLOR_GRID, (x, max(0, int(cy))), (x, end_y))
+            pygame.draw.line(surface, config.C_DARK_GRAY, (x, max(0, int(cy))), (x, end_y))
         
         for y_idx in range(config.ROWS + 1):
             y = int(y_idx * config.TILE_SIZE * zoom + cy)
             if y >= config.WINDOW_HEIGHT: y = config.WINDOW_HEIGHT - 1
-            pygame.draw.line(surface, config.COLOR_GRID, (max(0, int(cx)), y), (end_x, y))
+            pygame.draw.line(surface, config.C_DARK_GRAY, (max(0, int(cx)), y), (end_x, y))
         
         WorldRenderer.draw_level(surface, in_game_scene.level, cx, cy, zoom)
 
@@ -185,7 +197,8 @@ class WorldRenderer:
             px = int(wx * zoom + cx)
             py = int(wy * zoom + cy)
             tile_sz = int(config.TILE_SIZE * zoom)
-            pygame.draw.rect(surface, (255, 255, 100), (px - tile_sz // 2, py - tile_sz // 2, tile_sz, tile_sz), max(1, int(3 * zoom)))
+            thick = max(2, int(3 * zoom))
+            pygame.draw.rect(surface, config.C_WHITE, (px - tile_sz // 2, py - tile_sz // 2, tile_sz, tile_sz), thick)
 
         for tower in in_game_scene.towers:
             tower_upg_data = upgrade_data if tower == upgrading_tower else None

@@ -1,3 +1,6 @@
+"""
+Implements the interaction logic and progression handling for successful level clears.
+"""
 import pygame
 from graphics.ui.popups import VictoryMenuUI
 from level.level_data import LEVELS, LEVEL_EDGES

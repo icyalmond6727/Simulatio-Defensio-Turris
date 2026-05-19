@@ -1,3 +1,6 @@
+"""
+Handles disk I/O operations for reading and writing player progression JSON files.
+"""
 import json
 import os
 

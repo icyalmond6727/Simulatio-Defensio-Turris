@@ -1,4 +1,8 @@
+"""
+Implements the interaction logic for save slot file management.
+"""
 import pygame
+import config
 import core.save_system as save_system
 from graphics.ui.menus import SaveMenuUI
 from scenes.scene import Scene
@@ -27,7 +31,7 @@ class SaveMenu(Scene):
         """
         self.save_data = []
         
-        for i in range(3):
+        for i in range(config.MAX_SAVE_SLOTS):
             self.save_data.append(save_system.load_slot(i))
 
     def handle_interaction(self, interaction):
@@ -51,7 +55,7 @@ class SaveMenu(Scene):
                     self.deleting_slot = None
                 return
 
-            for i in range(3):
+            for i in range(config.MAX_SAVE_SLOTS):
                 if self.ui.save_slots[i].collidepoint(x, y):
                     self.game_manager.event_bus.emit("ui_click")
                     self.game_manager.load_save_slot(i)

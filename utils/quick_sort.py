@@ -29,7 +29,6 @@ def quick_sort(arr, key = lambda x: x):
         if key(arr[l]) > key(arr[m]):
             arr[l], arr[m] = arr[m], arr[l]
 
-
     def partition(arr, l, r, key = lambda x: x):
         """
         Partitions a sub-array around a pivot element such that elements smaller than 

@@ -1,3 +1,6 @@
+"""
+Implements a time-based event queue using a custom Min-Heap data structure.
+"""
 from scenes.defeat_menu import DefeatMenu
 from scenes.victory_menu import VictoryMenu
 
@@ -117,7 +120,6 @@ class EventHeap:
             if event_type == "damage":
                 target_enemy, damage = event_args
                 
-                # Check if the target is still alive to prevent ghost damage and zombie events
                 if not target_enemy.killed:
                     target_enemy.current_health -= damage
                     

@@ -1,3 +1,7 @@
+"""
+Implements the EventBus class for global observer pattern state management.
+"""
+
 class EventBus:
     """
     Central hub for the Observer Pattern.
@@ -33,6 +37,5 @@ class EventBus:
             *args, **kwargs: Additional arguments to pass to the listeners.
         """
         if event_type in self.listeners:
-            # Iterating over a copy of the list to prevent modification issues during execution
             for listener in list(self.listeners[event_type]):
                 listener(*args, **kwargs)

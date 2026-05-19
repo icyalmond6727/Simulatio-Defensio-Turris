@@ -1,3 +1,6 @@
+"""
+Implements the interaction logic for the initial boot screen.
+"""
 import pygame
 import sys
 from graphics.ui.menus import StartMenuUI

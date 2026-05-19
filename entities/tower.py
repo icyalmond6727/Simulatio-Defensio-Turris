@@ -1,3 +1,6 @@
+"""
+Implements the tower defense logic, targeting evaluation, and combat systems.
+"""
 import config
 from entities.entity_data import TOWERS
 import entities.projectile as projectile

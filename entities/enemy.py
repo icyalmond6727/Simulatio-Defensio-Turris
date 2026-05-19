@@ -1,3 +1,6 @@
+"""
+Defines the enemy entities and their movement logic along path vectors.
+"""
 import config
 from entities.entity_data import ENEMIES
 
@@ -47,6 +50,7 @@ class Enemy:
             self.path.append((self.path[-1][0], self.path[-1][1] + offset * direction))
 
         self.distance_left = 0
+        
         for i in range(len(self.path) - 1):
             self.distance_left -= abs(self.path[i][0] - self.path[i + 1][0]) + abs(self.path[i][1] - self.path[i + 1][1])
         
@@ -80,12 +84,14 @@ class Enemy:
             
             if target_x == self.x:
                 move = min(total_move, abs(target_y - self.y))
+                
                 if target_y < self.y: 
                     self.y -= move
                 else: 
                     self.y += move
             else:
                 move = min(total_move, abs(target_x - self.x))
+                
                 if target_x < self.x: 
                     self.x -= move
                 else: 

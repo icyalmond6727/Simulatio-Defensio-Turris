@@ -1,3 +1,6 @@
+"""
+Contains layout definitions and rendering routines for in-game Heads-Up Display components.
+"""
 import config
 import math
 import pygame
@@ -8,30 +11,42 @@ import utils.math_processor as math_processor
 
 class InspectMenu:
     """
-    UI component responsible for displaying detailed stats of the currently selected entity.
+    Renders the bottom inspection panel for viewing statistics of selected towers or enemies.
     """
     
     def __init__(self):
         """
-        Initializes the layout dimensions of the inspect menu dock.
+        Initializes the panel docking layout and action buttons.
         """
         self.dock_h = get_val_y(config.UI_INSPECT_H)
         self.dock_rect = pygame.Rect(0, config.WINDOW_HEIGHT - self.dock_h, config.WINDOW_WIDTH, self.dock_h)
+        
+        action_btn_w, action_btn_h = get_val_x(config.UI_BTN_ACT_W), get_val_y(config.UI_BTN_ACT_H)
+        gap = get_val_x(config.UI_GAP)
+        
+        sell_x = config.WINDOW_WIDTH - get_val_x(config.UI_PADDING) - action_btn_w
+        upg_x = sell_x - gap - action_btn_w
+        
+        self.sell_btn = pygame.Rect(sell_x, self.dock_rect.centery - action_btn_h / 2, action_btn_w, action_btn_h)
+        self.upgrade_btn = pygame.Rect(upg_x, self.dock_rect.centery - action_btn_h / 2, action_btn_w, action_btn_h)
 
-    def draw(self, surface, selected_entity, upgrade_data = None):
+    def draw(self, surface, selected_entity, upgrade_data = None, is_pre_wave = False, mx = 0, my = 0):
         """
-        Draws the inspection panel and formats entity stats dynamically.
+        Draws the inspection menu with colored stat names and structurally aligned lines.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            selected_entity (object): The currently selected tower or enemy.
-            upgrade_data (dict): Preview stats if a tower is being hovered for an upgrade.
+            selected_entity (Tower or Enemy): The active entity being inspected.
+            upgrade_data (dict, optional): Stats mapping if the entity is a tower previewing an upgrade.
+            is_pre_wave (bool, optional): Indicates if the game is in the setup phase (for refund logic).
+            mx (int, optional): Mouse X coordinate.
+            my (int, optional): Mouse Y coordinate.
         """
         if selected_entity is None:
             return
         
         pygame.draw.rect(surface, config.C_BG_DARK, self.dock_rect)
-        pygame.draw.line(surface, config.C_CYAN, (0, config.WINDOW_HEIGHT - self.dock_h), (config.WINDOW_WIDTH, config.WINDOW_HEIGHT - self.dock_h), max(1, get_val_y(2)))
+        pygame.draw.line(surface, config.C_CYAN, (0, self.dock_rect.top), (config.WINDOW_WIDTH, self.dock_rect.top), max(1, get_val_y(2)))
 
         e = selected_entity
         display_name = e.name.upper()
@@ -43,71 +58,130 @@ class InspectMenu:
             suffix = f" {numerals[min(target_level, len(numerals) - 1)]}"
             
         sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
+        stat_font = get_font(config.FONT_STAT_SIZE, name = config.FONT_NAME)
         ui_font = get_font(config.FONT_UI_SIZE, name = config.FONT_NAME)
 
-        name_txt = sys_font.render(f"UNIT: {display_name}", True, config.C_CYAN)
-        surface.blit(name_txt, (get_val_x(config.UI_PADDING), config.WINDOW_HEIGHT - get_val_y(config.UI_INSPECT_H - 15)))
+        name_y = self.dock_rect.top + get_val_y(config.UI_GAP)
+        name_bottom = name_y + sys_font.get_height()
+
+        name_txt = sys_font.render(f"UNIT: {display_name}", True, config.C_WHITE)
+        surface.blit(name_txt, (get_val_x(config.UI_PADDING), name_y))
 
         if suffix:
-            suffix_color = config.C_GREEN if upgrade_data else config.C_CYAN
+            suffix_color = config.C_GREEN_UPG if upgrade_data else config.C_WHITE
             suffix_txt = sys_font.render(suffix, True, suffix_color)
-            surface.blit(suffix_txt, (get_val_x(config.UI_PADDING) + name_txt.get_width(), config.WINDOW_HEIGHT - get_val_y(config.UI_INSPECT_H - 15)))
+            surface.blit(suffix_txt, (get_val_x(config.UI_PADDING) + name_txt.get_width(), name_y))
+
+        line_gap = get_val_y(8)
+        total_stat_h = stat_font.get_height() * 2 + line_gap
+        avail_h = self.dock_rect.bottom - name_bottom
+        line1_y = name_bottom + (avail_h - total_stat_h) / 2
+        line2_y = line1_y + stat_font.get_height() + line_gap
 
         if hasattr(e, "damage"):
             display_speed = "Instant" if e.current_bullet_speed == 0 else e.current_bullet_speed
-            chunks = []
-            base_color = config.C_BLUE_LIGHT
+            line1_chunks = []
             
-            def format_stat(name, current_val, stat_key, is_pos_inc = True):
-                chunks.append((f"{name}: {current_val}", base_color))
+            def format_stat(target_list, name, current_val, stat_key, val_color, is_pos_inc = True, prefix = ""):
+                if prefix: target_list.append((prefix, config.C_WHITE))
+                target_list.append((f"{name}: {current_val}", val_color))
                 if upgrade_data and stat_key in upgrade_data:
                     diff = upgrade_data[stat_key]
                     if diff != 0:
                         is_good = (diff > 0) if is_pos_inc else (diff < 0)
-                        color = config.C_GREEN if is_good else config.C_RED
+                        color = config.C_GREEN_UPG if is_good else config.C_RED_UPG
                         sign = "+" if diff > 0 else ""
-                        chunks.append((f" ({sign}{diff})", color))
-                chunks.append((" | ", base_color))
+                        target_list.append((f" ({sign}{diff})", color))
 
-            format_stat("DAMAGE", e.current_damage, "damage", True)
-            format_stat("RANGE", e.current_range, "range", True)
-            format_stat("FIRERATE", e.current_firerate, "firerate", True)
+            format_stat(line1_chunks, "DAMAGE", e.current_damage, "damage", config.C_RED, True)
+            format_stat(line1_chunks, "RANGE", e.current_range, "range", config.C_GREEN, True, " | ")
+            format_stat(line1_chunks, "FIRERATE", e.current_firerate, "firerate", config.C_BLUE_LIGHT, True, " | ")
+            format_stat(line1_chunks, "BULLET SPEED", display_speed, "bullet_speed", config.C_CYAN, True, " | ")
             
-            chunks.append((f"BULLET SPEED: {display_speed}", base_color))
+            line2_chunks = []
+            dur_frames = getattr(e, "current_damage_duration", 0)
+            dur_str = "Instant" if dur_frames <= 1 else f"{dur_frames / config.FPS:.2f}".rstrip('0').rstrip('.') + "s"
             
-            if upgrade_data and "bullet_speed" in upgrade_data:
-                diff = upgrade_data["bullet_speed"]
-                if diff != 0:
-                    sign = "+" if diff > 0 else ""
-                    chunks.append((f" ({sign}{diff})", config.C_GREEN))
-            
-            chunks.append((f" | DAMAGE TYPE: {e.damage_type.capitalize()}", base_color))
+            line2_chunks.append((f"DAMAGE DURATION: {dur_str}", config.C_WHITE))
             
             if upgrade_data and "damage_duration" in upgrade_data:
                 diff = upgrade_data["damage_duration"]
                 if diff != 0:
-                    chunks.append((" | DUR", base_color))
                     sign = "+" if diff > 0 else ""
-                    color = config.C_GREEN if diff < 0 else config.C_RED
-                    chunks.append((f" ({sign}{diff})", color))
+                    color = config.C_GREEN_UPG if diff < 0 else config.C_RED_UPG
+                    line2_chunks.append((f" ({sign}{diff})", color))
+
+            line2_chunks.append((" | ", config.C_WHITE))
+            type_color = config.C_ORANGE if e.damage_type == "thermal" else config.C_PURPLE
+            line2_chunks.append((f"DAMAGE TYPE: {e.damage_type.capitalize()}", type_color))
+            
+            cur_x = get_val_x(config.UI_PADDING)
+            for text, color in line1_chunks:
+                txt_surf = stat_font.render(text, True, color)
+                surface.blit(txt_surf, (cur_x, line1_y))
+                cur_x += txt_surf.get_width()
 
             cur_x = get_val_x(config.UI_PADDING)
-            cur_y = config.WINDOW_HEIGHT - get_val_y(35)
-            
-            for text, color in chunks:
-                txt_surf = ui_font.render(text, True, color)
-                surface.blit(txt_surf, (cur_x, cur_y))
+            for text, color in line2_chunks:
+                txt_surf = stat_font.render(text, True, color)
+                surface.blit(txt_surf, (cur_x, line2_y))
                 cur_x += txt_surf.get_width()
+                
+            refund_amount = e.total_gold_spent if is_pre_wave else e.total_gold_spent // 2
+            pygame.draw.rect(surface, config.C_BTN_DANGER, self.sell_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
+            
+            sell_lbl = ui_font.render("SELL: ", True, config.C_WHITE)
+            sell_val = ui_font.render(f"+{refund_amount} G", True, config.C_YELLOW)
+            start_x = self.sell_btn.centerx - (sell_lbl.get_width() + sell_val.get_width()) / 2
+            surface.blit(sell_lbl, (start_x, self.sell_btn.centery - sell_lbl.get_height() / 2))
+            surface.blit(sell_val, (start_x + sell_lbl.get_width(), self.sell_btn.centery - sell_val.get_height() / 2))
+
+            if e.upgrade_level < len(e.upgrades):
+                upg_cost = e.upgrades[e.upgrade_level]["cost"]
+                pygame.draw.rect(surface, config.C_BTN_PRIMARY, self.upgrade_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
+                upg_lbl = ui_font.render("UPGRADE: ", True, config.C_WHITE)
+                upg_val = ui_font.render(f"-{upg_cost} G", True, config.C_YELLOW)
+                ustart_x = self.upgrade_btn.centerx - (upg_lbl.get_width() + upg_val.get_width()) / 2
+                surface.blit(upg_lbl, (ustart_x, self.upgrade_btn.centery - upg_lbl.get_height() / 2))
+                surface.blit(upg_val, (ustart_x + upg_lbl.get_width(), self.upgrade_btn.centery - upg_val.get_height() / 2))
+            else:
+                pygame.draw.rect(surface, config.C_BTN_DEFAULT, self.upgrade_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
+                upg_txt = ui_font.render("MAX LEVEL", True, config.C_OUTLINE_LIGHT)
+                surface.blit(upg_txt, (self.upgrade_btn.centerx - upg_txt.get_width() / 2, self.upgrade_btn.centery - upg_txt.get_height() / 2))
+            
         else:
-            health_ratio = f"{int(e.current_health)} / {e.health}"
-            stats = f"HEALTH: {health_ratio} | SPEED: {e.current_speed} | KINETIC RESISTANCE: {e.kinetic_resistance * 100}% | THERMAL RESISTANCE: {e.thermal_resistance * 100}% | GOLD YIELD: {e.gold_yield} | LIVES PENALTY: {e.lives_penalty}"
-            stats_txt = ui_font.render(stats, True, config.C_RED)
-            surface.blit(stats_txt, (get_val_x(config.UI_PADDING), config.WINDOW_HEIGHT - get_val_y(35)))
+            line1_chunks = [
+                (f"HEALTH: {int(e.current_health)}/{e.health}", config.C_RED),
+                (" | ", config.C_WHITE), 
+                (f"SPEED: {e.current_speed}", config.C_BLUE_LIGHT),
+                (" | ", config.C_WHITE), 
+                (f"YIELD: {e.gold_yield} G", config.C_YELLOW),
+                (" | ", config.C_WHITE), 
+                (f"PENALTY: {e.lives_penalty}", config.C_RED_DARK)
+            ]
+            
+            line2_chunks = [
+                (f"KINETIC RES: {int(e.kinetic_resistance * 100)}%", config.C_PURPLE),
+                (" | ", config.C_WHITE), 
+                (f"THERMAL RES: {int(e.thermal_resistance * 100)}%", config.C_ORANGE)
+            ]
+            
+            cur_x = get_val_x(config.UI_PADDING)
+            for text, color in line1_chunks:
+                txt_surf = stat_font.render(text, True, color)
+                surface.blit(txt_surf, (cur_x, line1_y))
+                cur_x += txt_surf.get_width()
+                
+            cur_x = get_val_x(config.UI_PADDING)
+            for text, color in line2_chunks:
+                txt_surf = stat_font.render(text, True, color)
+                surface.blit(txt_surf, (cur_x, line2_y))
+                cur_x += txt_surf.get_width()
 
 
 class ResourceMenu:
     """
-    UI component displaying the player's core economy (Gold, Lives, Wave status).
+    Renders the player's core economy metrics (Gold, Lives, Wave status) during gameplay.
     """
     
     def __init__(self):
@@ -118,12 +192,12 @@ class ResourceMenu:
 
     def draw(self, surface, in_game_scene, wave_button):
         """
-        Draws the resources HUD and the interactive wave start button with its cooldown ring.
+        Draws the HUD block and processes the visual state of the wave start button.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            in_game_scene (InGame): Reference to the active scene for accessing gold/lives.
-            wave_button (pygame.Rect): The rectangle representing the hit area of the wave button.
+            in_game_scene (InGame): The active scene for state lookup.
+            wave_button (pygame.Rect): The bounding box of the wave start button.
         """
         pygame.draw.rect(surface, config.C_BG_MENU, self.hud_rect, border_radius = get_val_x(config.UI_RADIUS_HUD))
         pygame.draw.rect(surface, config.C_OUTLINE_DARK, self.hud_rect, width = max(1, get_val_x(2)), border_radius = get_val_x(config.UI_RADIUS_HUD))
@@ -131,7 +205,7 @@ class ResourceMenu:
         sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
         
         gold_txt = sys_font.render(f"GOLD: {in_game_scene.gold}", True, config.C_YELLOW)
-        lives_txt = sys_font.render(f"LIVES: {in_game_scene.lives}", True, config.C_RED)
+        lives_txt = sys_font.render(f"LIVES: {in_game_scene.lives}", True, config.C_RED_DARK)
         wave_txt = sys_font.render(f"WAVE: {in_game_scene.current_wave}/{in_game_scene.level.wave_count}", True, config.C_WHITE)
         
         gap = self.hud_rect.height / 4
@@ -141,130 +215,136 @@ class ResourceMenu:
         surface.blit(wave_txt, (self.hud_rect.left + get_val_x(15), self.hud_rect.top + gap * 3 - wave_txt.get_height() / 2))
 
         btn = wave_button
-        pygame.draw.circle(surface, config.C_BTN_WAVE, btn.center, btn.width / 2)
+        is_ready = (in_game_scene.current_wave == 0) or (in_game_scene.wave_spawn_end_frame > 0 and in_game_scene.current_frame >= in_game_scene.wave_spawn_end_frame)
         
-        if in_game_scene.current_wave < in_game_scene.level.wave_count:
-            if in_game_scene.wave_cooldown > 0:
-                ratio = in_game_scene.wave_cooldown / in_game_scene.wave_interval
-                start_angle = math.pi / 2
-                stop_angle = math.pi / 2 + (2 * math.pi * ratio)
+        if is_ready:
+            pygame.draw.rect(surface, config.C_BG_SLOT, btn, border_radius = get_val_x(config.UI_RADIUS_HUD))
+        else:
+            pygame.draw.rect(surface, config.C_BTN_WAVE_INACTIVE, btn, border_radius = get_val_x(config.UI_RADIUS_HUD))
+            
+        if is_ready and 0 < in_game_scene.current_wave < in_game_scene.level.wave_count:
+            ratio = (in_game_scene.current_frame - in_game_scene.wave_spawn_end_frame) / in_game_scene.next_wave_delay
+            ratio = min(1.0, max(0.0, ratio))
+            
+            fill_h = int(btn.height * ratio)
+            if fill_h > 0:
+                clip_rect = pygame.Rect(btn.left, btn.bottom - fill_h, btn.width, fill_h)
+                original_clip = surface.get_clip()
+                surface.set_clip(clip_rect)
                 
-                cx, cy = btn.center
-                r_btn = btn.width / 2
+                fill_surf = pygame.Surface((btn.width, btn.height), pygame.SRCALPHA)
+                r, g, b = config.C_RED
+                pygame.draw.rect(fill_surf, (r, g, b, 120), (0, 0, btn.width, btn.height), border_radius = get_val_x(config.UI_RADIUS_HUD))
+                surface.blit(fill_surf, (btn.left, btn.top))
                 
-                thickness = max(2, get_val_x(4))
-                r_mid = r_btn + thickness / 2
-                
-                arc_len = (2 * math.pi * ratio) * r_mid
-                steps = max(2, int(arc_len * 1.5)) 
-                
-                for i in range(steps):
-                    angle = start_angle + (stop_angle - start_angle) * i / (steps - 1)
-                    arc_cx = cx + r_mid * math.cos(angle)
-                    arc_cy = cy - r_mid * math.sin(angle)
-                    pygame.draw.circle(surface, config.C_CYAN, (arc_cx, arc_cy), thickness / 2)
-            else:
-                pygame.draw.circle(surface, config.C_BTN_WAVE_INACTIVE, btn.center, btn.width // 2 + max(1, get_val_x(2)), max(1, get_val_x(2)))
+                surface.set_clip(original_clip) 
+        
+        pygame.draw.rect(surface, config.C_OUTLINE_DARK, btn, width = max(1, get_val_x(2)), border_radius = get_val_x(config.UI_RADIUS_HUD))
         
         cx, cy = btn.center
-        play_icon = [(cx - get_val_x(5), cy - get_val_y(10)), (cx - get_val_x(5), cy + get_val_y(10)), (cx + get_val_x(12), cy)]
-        pygame.draw.polygon(surface, config.C_WHITE, play_icon)
+        play_icon = [(cx - get_val_x(6), cy - get_val_y(8)), (cx - get_val_x(6), cy + get_val_y(8)), (cx + get_val_x(8), cy)]
+        icon_color = config.C_WHITE if is_ready else config.C_GRAY
+        pygame.draw.polygon(surface, icon_color, play_icon)
 
 
 class TowerMenu:
     """
-    Dynamic UI component that switches between tower building options (when selecting an empty tile)
-    and tower management options (upgrading, selling, targeting) when selecting an existing tower.
+    Provides the UI contextual menu for building new towers or managing existing tower priorities.
     """
     
     def __init__(self, tower = None, build_tile = None, build_tile_center = None, unlocked_towers = None):
         """
-        Initializes the tower menu context and creates interactable buttons dynamically based on the state.
+        Initializes the dynamic context menu.
         
         Args:
-            tower (Tower, optional): The existing tower instance to manage.
-            build_tile (tuple, optional): The grid coordinates for a new tower.
-            build_tile_center (tuple, optional): The pixel coordinates for a new tower.
-            unlocked_towers (list, optional): Available towers to display in the build menu.
+            tower (Tower, optional): The selected tower for modification.
+            build_tile (tuple, optional): The grid tile targeted for building.
+            build_tile_center (tuple, optional): The pixel coordinates of the build tile.
+            unlocked_towers (list, optional): Available tower options for building.
         """
         self.build_tile = build_tile
         self.build_tile_center = build_tile_center
         self.tower = tower
         
+        title_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
+        gap = get_val_x(config.UI_GAP)
+        
         if self.tower is None:
             self.dock_rect = pygame.Rect(0, config.WINDOW_HEIGHT - get_val_y(config.UI_TOWER_BUILD_H), config.WINDOW_WIDTH, get_val_y(config.UI_TOWER_BUILD_H))
             self.tower_options = unlocked_towers if unlocked_towers is not None else []
             self.buttons = {}
-            btn_w, btn_h, gap = get_val_x(config.UI_BTN_TOWER_W), get_val_y(config.UI_BTN_TOWER_H), get_val_x(config.UI_GAP)
+            
+            btn_w, btn_h = get_val_x(config.UI_BTN_TOWER_W), get_val_y(config.UI_BTN_TOWER_H)
             start_x = get_val_x(config.UI_PADDING)
-            start_y = self.dock_rect.top + get_val_y(25) 
+            
+            title_bottom = self.dock_rect.top + get_val_y(config.UI_GAP) + title_font.get_height()
+            start_y = title_bottom + (self.dock_rect.bottom - title_bottom - btn_h) / 2
             
             for i, tower_name in enumerate(self.tower_options):
                 self.buttons[tower_name] = pygame.Rect(start_x + i * (btn_w + gap), start_y, btn_w, btn_h)
         else:
             self.dock_rect = pygame.Rect(0, config.WINDOW_HEIGHT - get_val_y(config.UI_TOWER_MANAGE_OFFSET), config.WINDOW_WIDTH, get_val_y(config.UI_TOWER_MANAGE_H))
+            
             self.priority_options = ["distance_left", "current_health", "current_speed", "gold_yield", "lives_penalty"]
             self.display_names = {
-                "distance_left": "Closest to exit",
-                "current_health": "Highest health",
-                "current_speed": "Fastest",
-                "gold_yield": "Highest yield",
-                "lives_penalty": "Highest penalty"
+                "distance_left": "Closest to exit", "current_health": "Highest health",
+                "current_speed": "Fastest", "gold_yield": "Highest yield", "lives_penalty": "Highest penalty"
             }
-            self.pri_buttons = {}
-            btn_w, btn_h, gap = get_val_x(config.UI_BTN_SML_W), get_val_y(config.UI_BTN_SML_H), get_val_x(10)
-            start_x = get_val_x(config.UI_PADDING)
-            start_y1 = self.dock_rect.top + get_val_y(20)
             
-            for i, key in enumerate(self.priority_options):
-                self.pri_buttons[key] = pygame.Rect(start_x + i * (btn_w + gap), start_y1, btn_w, btn_h)
-
             self.res_options = ["None", "kinetic_resistance", "thermal_resistance"]
             self.res_display_names = {
-                "None": "Any",
-                "kinetic_resistance": "Kinetic",
-                "thermal_resistance": "Thermal"
+                "None": "Any", "kinetic_resistance": "Kinetic", "thermal_resistance": "Thermal"
             }
+            
+            self.pri_buttons = {}
             self.res_buttons = {}
-            start_y2 = self.dock_rect.top + get_val_y(55)
+            
+            btn_w, btn_h = get_val_x(config.UI_BTN_SML_W), get_val_y(config.UI_BTN_SML_H)
+            
+            title_bottom = self.dock_rect.top + get_val_y(config.UI_GAP) + title_font.get_height()
+            start_y = title_bottom + (self.dock_rect.bottom - title_bottom - btn_h) / 2
+            
+            left_start_x = get_val_x(config.UI_PADDING)
+            for i, key in enumerate(self.priority_options):
+                self.pri_buttons[key] = pygame.Rect(left_start_x + i * (btn_w + gap), start_y, btn_w, btn_h)
+
+            total_res_width = len(self.res_options) * btn_w + (len(self.res_options) - 1) * gap
+            right_start_x = config.WINDOW_WIDTH - get_val_x(config.UI_PADDING) - total_res_width
             
             for i, key in enumerate(self.res_options):
                 logic_key = None if key == "None" else key
-                self.res_buttons[logic_key] = pygame.Rect(start_x + i * (btn_w + gap), start_y2, btn_w, btn_h)
-            
-            action_btn_w, action_btn_h = get_val_x(config.UI_BTN_ACT_W), get_val_y(config.UI_BTN_ACT_H)
-            sell_x = config.WINDOW_WIDTH - get_val_x(config.UI_PADDING) - action_btn_w
-            upg_x = sell_x - gap - action_btn_w
-            
-            self.sell_btn = pygame.Rect(sell_x, self.dock_rect.top + get_val_y(25), action_btn_w, action_btn_h)
-            self.upgrade_btn = pygame.Rect(upg_x, self.dock_rect.top + get_val_y(25), action_btn_w, action_btn_h)
+                self.res_buttons[logic_key] = pygame.Rect(right_start_x + i * (btn_w + gap), start_y, btn_w, btn_h)
 
-    def draw(self, surface, mx = 0, my = 0, cx = 0, cy = 0, zoom = 1, is_pre_wave = False):
+    def draw(self, surface, mx = 0, my = 0, cx = 0, cy = 0, zoom = 1):
         """
-        Draws the active tower interaction state, including tooltips and range previews.
+        Draws the tower management or construction menu and associated hovering tooltips.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            mx, my (int): Current mouse coordinates for hover states.
-            cx, cy (float): Camera offsets.
-            zoom (float): Camera scale factor.
-            is_pre_wave (bool): Evaluates refund logic (100% vs 50% sell return).
+            mx (int): Mouse X coordinate.
+            my (int): Mouse Y coordinate.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
+            zoom (float): Camera zoom factor.
         """
         pygame.draw.rect(surface, config.C_BG_TOWER_MENU, self.dock_rect)
         pygame.draw.line(surface, config.C_GREEN if self.tower is None else config.C_BLUE_LIGHT, (0, self.dock_rect.top), (config.WINDOW_WIDTH, self.dock_rect.top), max(1, get_val_y(2)))
         
         ui_font = get_font(config.FONT_UI_SIZE, name = config.FONT_NAME)
+        stat_font = get_font(config.FONT_STAT_SIZE, name = config.FONT_NAME)
+        title_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
 
         if self.tower is None:
-            title_txt = ui_font.render("BUILD TOWER", True, config.C_OUTLINE_LIGHT)
-            surface.blit(title_txt, (get_val_x(config.UI_PADDING), self.dock_rect.top + get_val_y(10)))
+            title_txt = title_font.render("BUILD TOWER", True, config.C_GRAY)
+            surface.blit(title_txt, (get_val_x(config.UI_PADDING), self.dock_rect.top + get_val_y(config.UI_GAP)))
 
             hovered_tower = None
             for name, rect in self.buttons.items():
                 pygame.draw.rect(surface, config.C_BG_SLOT, rect, border_radius = get_val_x(config.UI_RADIUS_SML))
                 icon_rect = pygame.Rect(rect.x + get_val_x(5), rect.y + get_val_y(5), rect.height - get_val_y(10), rect.height - get_val_y(10))
                 pygame.draw.rect(surface, entity_data.TOWERS[name]["color"], icon_rect, border_radius = get_val_x(config.UI_RADIUS_SML))
-                text = ui_font.render(name, True, config.C_WHITE)
+                
+                text = stat_font.render(name.upper(), True, config.C_WHITE)
                 surface.blit(text, (rect.x + icon_rect.width + get_val_x(15), rect.centery - text.get_height() / 2))
 
                 if rect.collidepoint(mx, my):
@@ -272,19 +352,40 @@ class TowerMenu:
 
             if hovered_tower:
                 data = entity_data.TOWERS[hovered_tower]
-                
                 tooltip_h = get_val_y(config.UI_TOOLTIP_H)
                 tooltip_rect = pygame.Rect(0, self.dock_rect.top - tooltip_h, config.WINDOW_WIDTH, tooltip_h)
                 pygame.draw.rect(surface, config.C_BG_TOOLTIP, tooltip_rect)
                 pygame.draw.line(surface, config.C_GREEN, (0, tooltip_rect.top), (config.WINDOW_WIDTH, tooltip_rect.top), max(1, get_val_y(2)))
                 
-                title_hover = ui_font.render(f"PREVIEW: {hovered_tower.upper()}", True, config.C_GREEN)
-                surface.blit(title_hover, (get_val_x(config.UI_PADDING), tooltip_rect.top + get_val_y(10)))
-                
                 bs = "Instant" if data["bullet_speed"] == 0 else data["bullet_speed"]
-                stats = f"COST: {data['gold_cost']} G | DAMAGE: {data['damage']} | RANGE: {data['range']} | FIRERATE: {data['firerate']} | BULLET SPEED: {bs} | TYPE: {data['damage_type'].capitalize()}"
-                stats_txt = ui_font.render(stats, True, config.C_BLUE_LIGHT)
-                surface.blit(stats_txt, (get_val_x(config.UI_PADDING), tooltip_rect.top + get_val_y(35)))
+                type_color = config.C_ORANGE if data['damage_type'] == "thermal" else config.C_PURPLE
+                
+                dur_frames = data.get('damage_duration', 0)
+                dur_str = "Instant" if dur_frames <= 1 else f"{dur_frames / config.FPS:.2f}".rstrip('0').rstrip('.') + "s"
+                
+                chunks = [
+                    (f"COST: {data['gold_cost']} G", config.C_YELLOW),
+                    (" | ", config.C_WHITE), 
+                    (f"DAMAGE: {data['damage']}", config.C_RED),
+                    (" | ", config.C_WHITE), 
+                    (f"RANGE: {data['range']}", config.C_GREEN),
+                    (" | ", config.C_WHITE), 
+                    (f"FIRERATE: {data['firerate']}", config.C_BLUE_LIGHT),
+                    (" | ", config.C_WHITE), 
+                    (f"BULLET SPEED: {bs}", config.C_CYAN),
+                    (" | ", config.C_WHITE),
+                    (f"DAMAGE DURATION: {dur_str}", config.C_WHITE),
+                    (" | ", config.C_WHITE), 
+                    (f"DAMAGE TYPE: {data['damage_type'].capitalize()}", type_color)
+                ]
+                
+                stats_y = tooltip_rect.top + (tooltip_rect.height - stat_font.get_height()) / 2
+                
+                cur_x = get_val_x(config.UI_PADDING)
+                for text, color in chunks:
+                    txt_surf = stat_font.render(text, True, color)
+                    surface.blit(txt_surf, (cur_x, stats_y))
+                    cur_x += txt_surf.get_width()
                 
                 wx, wy = self.build_tile_center
                 px = int(wx * zoom + cx)
@@ -301,8 +402,12 @@ class TowerMenu:
                 surface.blit(preview_surf, (px - tw // 2, py - th // 2))
 
         else:
-            title_txt = ui_font.render("TARGETING & RESISTANCE PRIORITY", True, config.C_OUTLINE_LIGHT)
-            surface.blit(title_txt, (get_val_x(config.UI_PADDING), self.dock_rect.top + get_val_y(5)))
+            title_txt = title_font.render("TARGETING PRIORITY", True, config.C_GRAY)
+            surface.blit(title_txt, (get_val_x(config.UI_PADDING), self.dock_rect.top + get_val_y(config.UI_GAP)))
+            
+            res_title_txt = title_font.render("TARGET RESISTANCE FILTER", True, config.C_GRAY)
+            res_title_x = config.WINDOW_WIDTH - get_val_x(config.UI_PADDING) - res_title_txt.get_width()
+            surface.blit(res_title_txt, (res_title_x, self.dock_rect.top + get_val_y(config.UI_GAP)))
             
             for key, rect in self.pri_buttons.items():
                 is_selected = (self.tower.priority == key)
@@ -315,38 +420,34 @@ class TowerMenu:
 
             for key, rect in self.res_buttons.items():
                 is_selected = (self.tower.resistance_priority == key)
-                bg_color = config.C_BTN_RES_ACTIVE if is_selected else config.C_BG_SLOT
+                
+                if is_selected:
+                    if key == "kinetic_resistance":
+                        bg_color = config.C_PURPLE
+                    elif key == "thermal_resistance":
+                        bg_color = config.C_ORANGE
+                    else:
+                        bg_color = (200, 210, 220)
+                else:
+                    bg_color = config.C_BG_SLOT
+                    
                 text_color = config.C_BLACK if is_selected else config.C_WHITE
                 
                 pygame.draw.rect(surface, bg_color, rect, border_radius = get_val_x(config.UI_RADIUS_SML))
                 name_key = "None" if key is None else key
                 text = ui_font.render(self.res_display_names[name_key], True, text_color)
                 surface.blit(text, (rect.centerx - text.get_width() / 2, rect.centery - text.get_height() / 2))
-            
-            refund_amount = self.tower.total_gold_spent if is_pre_wave else self.tower.total_gold_spent // 2
-            pygame.draw.rect(surface, config.C_BTN_DANGER, self.sell_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
-            sell_txt = ui_font.render(f"SELL: +{refund_amount} G", True, config.C_WHITE)
-            surface.blit(sell_txt, (self.sell_btn.centerx - sell_txt.get_width() / 2, self.sell_btn.centery - sell_txt.get_height() / 2))
-
-            if self.tower.upgrade_level < len(self.tower.upgrades):
-                upg_cost = self.tower.upgrades[self.tower.upgrade_level]["cost"]
-                pygame.draw.rect(surface, config.C_BTN_PRIMARY, self.upgrade_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
-                upg_txt = ui_font.render(f"UPGRADE: -{upg_cost} G", True, config.C_WHITE)
-            else:
-                pygame.draw.rect(surface, config.C_BTN_DEFAULT, self.upgrade_btn, border_radius = get_val_x(config.UI_RADIUS_SML))
-                upg_txt = ui_font.render("MAX LEVEL", True, config.C_OUTLINE_LIGHT)
-            
-            surface.blit(upg_txt, (self.upgrade_btn.centerx - upg_txt.get_width() / 2, self.upgrade_btn.centery - upg_txt.get_height() / 2))
     
     def handle_click(self, x, y):
         """
-        Determines what component within the tower menu was clicked.
+        Processes interaction coordinates for the context menus.
         
         Args:
-            x, y (int): Coordinates of the click.
+            x (int): Screen X coordinate.
+            y (int): Screen Y coordinate.
             
         Returns:
-            str: An identifier defining the triggered action ("close", "sell", "upgrade", "keep_open", or a tower name).
+            str: An identifier detailing the result action.
         """
         if self.tower is None:
             if self.dock_rect.collidepoint(x, y):
@@ -366,28 +467,28 @@ class TowerMenu:
                     if rect.collidepoint(x, y):
                         self.tower.resistance_priority = key
                         return "keep_open"
-                
-                if self.sell_btn.collidepoint(x, y):
-                    return "sell"
-                if self.upgrade_btn.collidepoint(x, y):
-                    return "upgrade"
-                
                 return "keep_open"
             return "close"
-        
+
 
 class InGameUI:
     """
     Main orchestrator for the heads-up display and in-game interface components.
-    Consolidates rendering logic and handles high-level UI interaction flows.
     """
     
     def __init__(self):
         """
-        Initializes UI sub-menus and fixed hitboxes.
+        Initializes the top-level HUD layout structures.
         """
-        self.wave_button = pygame.Rect(get_val_x(config.UI_WAVE_BTN_X), get_val_y(config.UI_WAVE_BTN_Y), get_val_x(config.UI_WAVE_BTN_SIZE), get_val_x(config.UI_WAVE_BTN_SIZE))
-        self.notification_btn = get_rect(config.UI_NOTIF_BTN_X, config.UI_NOTIF_BTN_Y, config.UI_NOTIF_BTN_SIZE, config.UI_NOTIF_BTN_SIZE)
+        wave_size = get_val_x(config.UI_WAVE_BTN_SIZE)
+        
+        wave_x = config.WINDOW_WIDTH - get_val_x(config.UI_HUD_X) - wave_size
+        wave_y = get_val_y(config.UI_HUD_Y)
+        self.wave_button = pygame.Rect(wave_x, wave_y, wave_size, wave_size)
+        
+        notif_size = get_val_x(config.UI_NOTIF_BTN_SIZE)
+        notif_x = wave_x - get_val_x(config.UI_GAP) - notif_size
+        self.notification_btn = pygame.Rect(notif_x, wave_y, notif_size, notif_size)
         
         self.inspect_menu = InspectMenu()
         self.resource_menu = ResourceMenu()
@@ -395,22 +496,21 @@ class InGameUI:
 
     def open_tower_menu(self, tower = None, build_tile = None, build_tile_center = None, unlocked_towers = None):
         """
-        Spawns the contextual tower manager or builder panel.
+        Initializes and opens the contextual tower management panel.
         """
         self.tower_menu = TowerMenu(tower, build_tile, build_tile_center, unlocked_towers)
 
     def handle_click(self, x, y, scene):
         """
-        Interprets player input coordinates against the active UI components.
-        If a UI element captures the click, it executes the corresponding Scene mutation logic,
-        maintaining a strict boundary between UI coordinates and game state changes.
+        Processes global UI interactions for gameplay state controls.
         
         Args:
-            x, y (int): Coordinates of the mouse click.
-            scene (InGame): Reference to the active game scene to apply state changes.
+            x (int): Screen X coordinate.
+            y (int): Screen Y coordinate.
+            scene (InGame): The executing gameplay scene context.
             
         Returns:
-            bool: True if the UI consumed the click event, False if it should fall through to the world.
+            bool: Indicates if the click was consumed by UI operations.
         """
         if len(scene.active_notifications) > 0 and self.notification_btn.collidepoint(x, y):
             scene.game_manager.event_bus.emit("ui_click")
@@ -419,26 +519,33 @@ class InGameUI:
             scene.active_notifications.clear()
             return True
 
-        if math_processor.get_distance(x, y, self.wave_button.centerx, self.wave_button.centery) <= self.wave_button.width / 2:
-            if scene.current_wave < scene.level.wave_count and scene.wave_cooldown == 0:
+        if self.wave_button.collidepoint(x, y):
+            is_ready = (scene.current_wave == 0) or (scene.wave_spawn_end_frame > 0 and scene.current_frame >= scene.wave_spawn_end_frame)
+            if scene.current_wave < scene.level.wave_count and is_ready:
                 scene.game_manager.event_bus.emit("ui_click")
                 scene.start_wave()
             return True
             
+        if hasattr(scene.selected_entity, "upgrade_level"):
+            if self.inspect_menu.sell_btn.collidepoint(x, y):
+                scene.sell_tower(scene.selected_entity)
+                if self.tower_menu: self.tower_menu = None
+                return True
+            if self.inspect_menu.upgrade_btn.collidepoint(x, y):
+                scene.upgrade_tower(scene.selected_entity)
+                return True
+
         if self.tower_menu is not None:
             action = self.tower_menu.handle_click(x, y)
             
             if action in TOWERS:
-                scene.build_tower(action, self.tower_menu.build_tile, self.tower_menu.build_tile_center)
-                self.open_tower_menu(tower = scene.selected_entity, unlocked_towers = scene.level.towers)
+                b_tile = self.tower_menu.build_tile
+                b_center = self.tower_menu.build_tile_center
+                
+                scene.build_tower(action, b_tile, b_center)
+                self.open_tower_menu(tower = scene.selected_entity, build_tile = b_tile, build_tile_center = b_center, unlocked_towers = scene.level.towers)
                 return True
-            elif action == "upgrade":
-                scene.upgrade_tower(self.tower_menu.tower)
-                return True
-            elif action == "sell":
-                scene.sell_tower(self.tower_menu.tower)
-                self.tower_menu = None
-                return True
+                
             elif action == "keep_open":
                 return True
             elif action == "close":
@@ -449,16 +556,19 @@ class InGameUI:
 
     def draw(self, surface, in_game_scene, upgrade_data, mx, my):
         """
-        Draws all active sub-components of the HUD.
+        Renders the active components of the HUD system.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            in_game_scene (InGame): Reference to the active gameplay state.
-            upgrade_data (dict): Preview stats, if any.
-            mx, my (int): Current mouse coordinates.
+            in_game_scene (InGame): Data context provider.
+            upgrade_data (dict): Preview stats modifications.
+            mx (int): Active cursor X.
+            my (int): Active cursor Y.
         """
         self.resource_menu.draw(surface, in_game_scene, self.wave_button)
-        self.inspect_menu.draw(surface, in_game_scene.selected_entity, upgrade_data)
+        
+        is_pre_wave = (in_game_scene.current_wave == 0)
+        self.inspect_menu.draw(surface, in_game_scene.selected_entity, upgrade_data, is_pre_wave, mx, my)
 
         if len(in_game_scene.active_notifications) > 0:
             btn = self.notification_btn
@@ -481,4 +591,4 @@ class InGameUI:
 
         if self.tower_menu is not None:
             cx, cy, zoom = in_game_scene.cam_x, in_game_scene.cam_y, in_game_scene.zoom
-            self.tower_menu.draw(surface, mx, my, cx, cy, zoom, in_game_scene.current_wave == 0)
+            self.tower_menu.draw(surface, mx, my, cx, cy, zoom)

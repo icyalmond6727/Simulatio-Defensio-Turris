@@ -24,6 +24,13 @@ LEVEL_COORDS = {
 def create_empty_level(x, y):
     """
     Generates a blank template configuration dictionary for initialized levels.
+    
+    Args:
+        x (float): Map X position for UI.
+        y (float): Map Y position for UI.
+        
+    Returns:
+        dict: A default level configuration mapping.
     """
     return {
         "level_button": (x, y, 50, 50), "path_tiles": [[]], "build_tiles": [], 
@@ -50,7 +57,8 @@ LEVELS = {
             [("spawn", 0, "Light Attack Drone", 1, 60), ("delay", 60), ("spawn", 0, "Scout Drone", 5, 60)],
             [("spawn", 0, "Light Attack Drone", 3, 120)],
             [("spawn", 0, "Heavy Attack Drone", 1, 60), ("delay", 60), ("spawn", 0, "Scout Drone", 15, 30)]
-        ]
+        ],
+        "wave_delays": [600, 600, 600, 600, 600]
     }
 }
 

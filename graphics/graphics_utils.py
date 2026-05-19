@@ -1,48 +1,53 @@
+"""
+Provides foundational rendering utilities and dynamic resolution scaling for Pygame surfaces.
+"""
 import pygame
 import config
 
-BASE_W = 1280
-BASE_H = 720
-SX = config.WINDOW_WIDTH / BASE_W
-SY = config.WINDOW_HEIGHT / BASE_H
+SX = config.WINDOW_WIDTH / config.BASE_WIDTH
+SY = config.WINDOW_HEIGHT / config.BASE_HEIGHT
+
+S_MIN = min(SX, SY) 
 
 def get_rect(x, y, w, h):
     """
     Creates a Pygame Rect scaled to the current screen resolution based on base dimensions.
+    Utilizes uniform scaling (S_MIN) for dimensions to prevent UI stretching.
     
     Args:
-        x, y (float): Raw X and Y coordinates.
-        w, h (float): Raw width and height.
+        x (float): Raw X coordinate.
+        y (float): Raw Y coordinate.
+        w (float): Raw width.
+        h (float): Raw height.
         
     Returns:
         pygame.Rect: A scaled rect representing the bounding box.
     """
-    return pygame.Rect(int(x * SX), int(y * SY), int(w * SX), int(h * SY))
+    return pygame.Rect(int(x * SX), int(y * SY), int(w * S_MIN), int(h * S_MIN))
 
 def get_val_x(v):
     """
-    Scales an x-coordinate or width value based on the horizontal scaling factor.
+    Scales a coordinate or dimension uniformly to prevent distortion.
     
     Args:
         v (float): Raw coordinate or width.
         
     Returns:
-        int: Scaled dimension.
+        int: Uniformly scaled dimension.
     """
-    return int(v * SX)
+    return int(v * S_MIN)
 
 def get_val_y(v):
     """
-    Scales a y-coordinate or height value based on the vertical scaling factor.
+    Scales a coordinate or dimension uniformly to prevent distortion.
     
     Args:
         v (float): Raw coordinate or height.
         
     Returns:
-        int: Scaled dimension.
+        int: Uniformly scaled dimension.
     """
-    return int(v * SY)
-
+    return int(v * S_MIN)
 
 pygame.font.init()
 _font_cache = {}

@@ -1,3 +1,6 @@
+"""
+Manages audio loading, playback, and event bindings for the game's sound effects.
+"""
 import os
 import pygame
 

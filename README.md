@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.0] - 2026-05-20
+### Changed
+- GUI sizes, colors, etc
+- Next wave now automatically starts after a while (the player can still manually start it early)
+
+### Misc
+- Code refactoring
+
 ## [v0.4.1] - 2026-05-19
 ### Misc
 - Code refactoring

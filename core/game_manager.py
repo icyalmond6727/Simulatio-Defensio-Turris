@@ -1,3 +1,6 @@
+"""
+Orchestrates high-level game operations, scene management, and profile progression.
+"""
 import core.save_system as save_system
 from core.sound_manager import SoundManager
 from core.event_bus import EventBus

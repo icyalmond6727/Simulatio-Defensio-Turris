@@ -1,3 +1,6 @@
+"""
+Contains definitions for all primary state menus like Main Menu, Start Menu, Save Menu, and Database Menu.
+"""
 import config
 import math
 import pygame
@@ -74,7 +77,8 @@ class MainMenuUI:
         Args:
             surface (pygame.Surface): The rendering target.
             unlocked_levels (list): Integers representing levels the player has unlocked.
-            cx, cy (float): Camera offsets.
+            cx (float): Camera X offset.
+            cy (float): Camera Y offset.
             zoom (float): Camera scale factor.
         """
         surface.fill(config.COLOR_BACKGROUND)
@@ -130,7 +134,7 @@ class SaveMenuUI:
         
         sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
 
-        for i in range(3):
+        for i in range(config.MAX_SAVE_SLOTS):
             sy = start_y + i * (slot_h + get_val_y(config.UI_PADDING))
             rect = pygame.Rect(cx - slot_w / 2, sy, slot_w, slot_h)
             self.save_slots.append(rect)
@@ -165,10 +169,11 @@ class SaveMenuUI:
         surface.fill(config.COLOR_BACKGROUND)
         sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
         
-        title = sys_font.render("SELECT SAVE SLOT", True, config.C_WHITE)
+        title_font = get_font(config.FONT_TITLE_SIZE, name = config.FONT_NAME)
+        title = title_font.render("SELECT SAVE SLOT", True, config.C_WHITE)
         surface.blit(title, (config.WINDOW_WIDTH / 2 - title.get_width() / 2, get_val_y(80)))
 
-        for i in range(3):
+        for i in range(config.MAX_SAVE_SLOTS):
             slot_rect = self.save_slots[i]
             pygame.draw.rect(surface, config.C_BG_SLOT, slot_rect, border_radius = get_val_x(config.UI_RADIUS))
             
@@ -206,7 +211,11 @@ class DatabaseMenuUI:
     
     def __init__(self, unlocked_towers, encountered_enemies):
         """
-        Initializes the list layouts and parses the database items.
+        Initializes the layouts and dynamically populates list entries.
+        
+        Args:
+            unlocked_towers (list): String identifiers for constructed towers.
+            encountered_enemies (list): String identifiers for discovered enemies.
         """
         cx, cy = config.WINDOW_WIDTH / 2, config.WINDOW_HEIGHT / 2
         db_w, db_h = get_val_x(800), get_val_y(600)
@@ -260,11 +269,11 @@ class DatabaseMenuUI:
 
     def draw(self, surface, selected_item):
         """
-        Draws the database overlay, the scrollable list of entities, and the stat details.
+        Draws the database overlay, resolving detailed stats corresponding to the selected record.
         
         Args:
             surface (pygame.Surface): The rendering target.
-            selected_item (str): The name of the item currently being inspected.
+            selected_item (str): Identifier for the active list item.
         """
         overlay = pygame.Surface((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
         overlay.set_alpha(config.C_OVERLAY_DARK_ALPHA)
@@ -274,12 +283,9 @@ class DatabaseMenuUI:
         pygame.draw.rect(surface, config.C_BG_PANEL, self.menu_rect, border_radius = get_val_x(config.UI_RADIUS))
         pygame.draw.rect(surface, config.C_CYAN, self.menu_rect, width = max(1, get_val_x(3)), border_radius = get_val_x(config.UI_RADIUS))
 
-        title_font = get_font(config.FONT_TITLE_SIZE, name = config.FONT_NAME)
         ui_font = get_font(config.FONT_UI_SIZE, name = config.FONT_NAME)
         sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
-
-        title = title_font.render("DATABASE", True, config.C_WHITE)
-        surface.blit(title, (self.menu_rect.centerx - title.get_width() / 2, self.menu_rect.top + get_val_y(20)))
+        stat_font = get_font(config.FONT_STAT_SIZE, name = config.FONT_NAME)
 
         divider_x = self.menu_rect.left + get_val_x(280)
         pygame.draw.line(surface, config.C_OUTLINE_DARK, (divider_x, self.menu_rect.top + get_val_y(60)), (divider_x, self.menu_rect.bottom - get_val_y(80)), max(1, get_val_x(2)))
@@ -324,9 +330,10 @@ class DatabaseMenuUI:
                 data = entity_data.ENEMIES[selected_item]
             
             det_x = divider_x + get_val_x(30)
-            det_y = self.menu_rect.top + get_val_y(60)
+            
+            det_y = self.tower_header_pos[1]
 
-            name_txt = title_font.render(selected_item.upper(), True, config.C_WHITE)
+            name_txt = sys_font.render(selected_item.upper(), True, config.C_WHITE)
             surface.blit(name_txt, (det_x, det_y))
             
             icon_size = get_val_x(config.UI_ICON_SIZE)
@@ -339,50 +346,53 @@ class DatabaseMenuUI:
             e_h = icon_size * ratio_h
             pygame.draw.rect(surface, data["color"], (icon_rect.centerx - e_w / 2, icon_rect.centery - e_h / 2, e_w, e_h))
 
-            stat_y = icon_rect.bottom + get_val_y(15)
+            stat_y = icon_rect.bottom + get_val_y(20)
             
             if itype == "tower":
                 sec_per_shot = 1.0 / data['firerate'] if data['firerate'] > 0 else 0
                 sec_per_shot_str = f"{sec_per_shot:.2f}".rstrip('0').rstrip('.')
                 
                 dur_frames = data.get('damage_duration', 0)
-                if dur_frames <= 1:
-                    dur_str = "Instant"
-                else:
-                    dur_val = f"{dur_frames / config.FPS:.2f}".rstrip('0').rstrip('.')
-                    dur_str = f"{dur_val}s"
-                
+                dur_str = "Instant" if dur_frames <= 1 else f"{dur_frames / config.FPS:.2f}".rstrip('0').rstrip('.') + "s"
                 bs = "Instant" if data['bullet_speed'] == 0 else data['bullet_speed']
 
-                stats = [
-                    f"Cost: {data['gold_cost']} G",
-                    f"Damage: {data['damage']}",
-                    f"Damage Type: {data['damage_type'].capitalize()}",
-                    f"Range: {data['range']}",
-                    f"Firerate: {sec_per_shot_str} s/shot",
-                    f"Damage Duration: {dur_str}",
-                    f"Bullet Speed: {bs}"
+                type_color = config.C_ORANGE if data['damage_type'] == "thermal" else config.C_PURPLE
+                
+                chunks_list = [
+                    [(f"COST: {data['gold_cost']} G", config.C_YELLOW)],
+                    [(f"DAMAGE: {data['damage']}", config.C_RED)],
+                    [(f"RANGE: {data['range']}", config.C_GREEN)],
+                    [(f"FIRERATE: {sec_per_shot_str} s/shot", config.C_BLUE_LIGHT)],
+                    [(f"BULLET SPEED: {bs}", config.C_CYAN)],
+                    [(f"DAMAGE DURATION: {dur_str}", config.C_WHITE)],
+                    [(f"DAMAGE TYPE: {data['damage_type'].capitalize()}", type_color)]
                 ]
                 
-                stat_gap = get_val_y(30)
-                for s in stats:
-                    txt = sys_font.render(s, True, config.C_BLUE_LIGHT)
-                    surface.blit(txt, (det_x, stat_y))
+                stat_gap = get_val_y(28)
+                for chunks in chunks_list:
+                    cur_x = det_x
+                    for text, color in chunks:
+                        txt_surf = stat_font.render(text, True, color)
+                        surface.blit(txt_surf, (cur_x, stat_y))
+                        cur_x += txt_surf.get_width()
                     stat_y += stat_gap
             else:
-                stats = [
-                    f"Health: {data['health']}",
-                    f"Speed: {data['speed']}",
-                    f"Kinetic Resistance: {int(data['kinetic_resistance'] * 100)}%",
-                    f"Thermal Resistance: {int(data['thermal_resistance'] * 100)}%",
-                    f"Gold Yield: {data['gold_yield']} G",
-                    f"Lives Penalty: {data['lives_penalty']}"
+                chunks_list = [
+                    [(f"HEALTH: {data['health']}", config.C_RED)],
+                    [(f"SPEED: {data['speed']}", config.C_BLUE_LIGHT)],
+                    [(f"KINETIC RES: {int(data['kinetic_resistance'] * 100)}%", config.C_PURPLE)],
+                    [(f"THERMAL RES: {int(data['thermal_resistance'] * 100)}%", config.C_ORANGE)],
+                    [(f"YIELD: {data['gold_yield']} G", config.C_YELLOW)],
+                    [(f"PENALTY: {data['lives_penalty']}", config.C_RED_DARK)]
                 ]
                 
-                stat_gap = get_val_y(30)
-                for s in stats:
-                    txt = sys_font.render(s, True, config.C_BLUE_LIGHT)
-                    surface.blit(txt, (det_x, stat_y))
+                stat_gap = get_val_y(28)
+                for chunks in chunks_list:
+                    cur_x = det_x
+                    for text, color in chunks:
+                        txt_surf = stat_font.render(text, True, color)
+                        surface.blit(txt_surf, (cur_x, stat_y))
+                        cur_x += txt_surf.get_width()
                     stat_y += stat_gap
 
         self.back_btn.draw(surface)

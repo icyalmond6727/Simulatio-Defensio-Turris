@@ -1,4 +1,8 @@
+"""
+Implements the interaction logic for the in-game encyclopedia.
+"""
 import pygame
+import config
 from graphics.ui.menus import DatabaseMenuUI
 from scenes.scene import Scene
 
@@ -40,9 +44,7 @@ class DatabaseMenu(Scene):
             self.game_manager.change_scene(self.previous_scene)
 
         elif interaction.type == pygame.MOUSEWHEEL:
-            scroll_speed = 30
-            self.ui.scroll_y += interaction.y * scroll_speed
-            
+            self.ui.scroll_y += interaction.y * config.SCROLL_SPEED
             self.ui.scroll_y = max(self.ui.max_scroll, min(0, self.ui.scroll_y))
             
         elif interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:

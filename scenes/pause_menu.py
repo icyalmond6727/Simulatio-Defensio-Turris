@@ -1,3 +1,6 @@
+"""
+Implements the interaction logic for the paused gameplay state.
+"""
 import pygame
 from graphics.ui.popups import PauseMenuUI
 from scenes.scene import Scene

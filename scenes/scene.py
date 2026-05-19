@@ -1,3 +1,6 @@
+"""
+Provides the foundational Scene base class for state management and 2D camera operations.
+"""
 import pygame
 import config
 
@@ -79,9 +82,8 @@ class Scene:
             mx, my = pygame.mouse.get_pos()
             wx, wy = self.screen_to_world(mx, my)
             
-            zoom_speed = 0.1
-            self.zoom += interaction.y * zoom_speed
-            self.zoom = max(self.min_zoom, min(self.zoom, 2.0)) 
+            self.zoom += interaction.y * config.ZOOM_SPEED
+            self.zoom = max(self.min_zoom, min(self.zoom, config.MAX_ZOOM)) 
             
             self.cam_x = mx - wx * self.zoom
             self.cam_y = my - wy * self.zoom

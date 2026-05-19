@@ -1,3 +1,6 @@
+"""
+Implements the interaction logic for the level defeat state.
+"""
 import pygame
 from graphics.ui.popups import DefeatMenuUI
 from scenes.scene import Scene

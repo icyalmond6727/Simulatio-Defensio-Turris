@@ -1,3 +1,6 @@
+"""
+Implements the interactive level selection state.
+"""
 import pygame
 from graphics.ui.menus import MainMenuUI
 from scenes.scene import Scene

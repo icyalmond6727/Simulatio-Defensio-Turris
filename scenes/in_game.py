@@ -1,3 +1,6 @@
+"""
+Manages the core gameplay loop, entity updates, and win/loss condition evaluations.
+"""
 import pygame
 import config
 from core.event_heap import EventHeap
@@ -38,8 +41,8 @@ class InGame(Scene):
         self.current_wave = 0
         self.current_frame = 0
 
-        self.wave_cooldown = 0
-        self.wave_interval = 0
+        self.wave_spawn_end_frame = 0
+        self.next_wave_delay = 0
         self.selected_entity = None
         self.active_notifications = []
         
@@ -81,6 +84,10 @@ class InGame(Scene):
             elif action_type == "delay":
                 _, frames = action
                 spawn_time += frames
+
+        self.wave_spawn_end_frame = spawn_time
+        delays = getattr(self.level, "wave_delays", [])
+        self.next_wave_delay = delays[self.current_wave] if self.current_wave < len(delays) else config.FPS * config.WAVE_DELAY_SEC
 
         self.current_wave += 1
         
@@ -157,7 +164,6 @@ class InGame(Scene):
             x, y = interaction.pos
             wx, wy = self.screen_to_world(x, y)
 
-            # Delegate UI clicks to the UI manager first
             if self.ui.handle_click(x, y, self):
                 return
                 
@@ -197,11 +203,12 @@ class InGame(Scene):
         Processes the event heap, updates entity positions and states, checks win/loss conditions.
         """
         self.current_frame += 1
-        
-        if self.wave_cooldown > 0:
-            self.wave_cooldown -= 1
 
         self.event_heap.process_events(self.current_frame, self)
+        
+        if self.current_wave < self.level.wave_count and self.wave_spawn_end_frame > 0:
+            if self.current_frame >= self.wave_spawn_end_frame + self.next_wave_delay:
+                self.start_wave()
         
         self._update_and_cleanup_enemies()
         self._update_and_cleanup_projectiles()
@@ -261,11 +268,11 @@ class InGame(Scene):
         Evaluates if the current level state triggers a victory or defeat condition.
         """
         if self.lives <= 0:
-            defeat_frame = self.current_frame + config.FPS
+            defeat_frame = self.current_frame + config.FPS * config.DEFEAT_DELAY_SEC
             self.event_heap.push((defeat_frame, "defeat", ()))
             
         elif self.current_wave == self.level.wave_count and len(self.enemies) == 0 and self.event_heap.is_empty():
-            victory_frame = self.current_frame + config.FPS * 3
+            victory_frame = self.current_frame + config.FPS * config.VICTORY_DELAY_SEC
             self.event_heap.push((victory_frame, "victory", ()))
 
     def draw(self, surface):
@@ -280,13 +287,15 @@ class InGame(Scene):
         upgrade_data = None
         build_tile_center = None
         
+        if self.selected_entity and hasattr(self.selected_entity, "upgrade_level"):
+            if self.selected_entity.upgrade_level < len(self.selected_entity.upgrades):
+                if hasattr(self.ui.inspect_menu, 'upgrade_btn') and self.ui.inspect_menu.upgrade_btn.collidepoint(mx, my):
+                    upgrading_tower = self.selected_entity
+                    upgrade_data = upgrading_tower.upgrades[upgrading_tower.upgrade_level]["stats"]
+                    
         if self.ui.tower_menu is not None:
             if self.ui.tower_menu.tower is None:
                 build_tile_center = self.ui.tower_menu.build_tile_center
-            elif self.ui.tower_menu.tower.upgrade_level < len(self.ui.tower_menu.tower.upgrades):
-                if hasattr(self.ui.tower_menu, 'upgrade_btn') and self.ui.tower_menu.upgrade_btn.collidepoint(mx, my):
-                    upgrading_tower = self.ui.tower_menu.tower
-                    upgrade_data = upgrading_tower.upgrades[upgrading_tower.upgrade_level]["stats"]
 
         WorldRenderer.render_world(
             surface, 

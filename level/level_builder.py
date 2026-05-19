@@ -1,3 +1,6 @@
+"""
+Handles the construction and spatial parsing of level geometries.
+"""
 import config
 from level.level_data import LEVELS
 import utils.math_processor as math_processor

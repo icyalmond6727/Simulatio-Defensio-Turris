@@ -4,8 +4,8 @@ Bootstraps the Pygame environment, initializes the GameManager, and runs the cor
 """
 import pygame
 import sys
-import core.game_manager as game_manager
 import config
+import core.game_manager as game_manager
 
 def main():
     """

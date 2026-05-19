@@ -1,3 +1,6 @@
+"""
+Provides the base class for rendering standard popup overlays.
+"""
 import pygame
 import config
 from graphics.graphics_utils import get_val_x, get_val_y, get_font

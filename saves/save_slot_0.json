@@ -1,10 +1,18 @@
 {
     "unlocked_levels": [
-        1
+        1,
+        2,
+        3,
+        4
     ],
-    "encountered_enemies": [],
+    "encountered_enemies": [
+        "Scout Drone",
+        "Light Attack Drone",
+        "Heavy Attack Drone"
+    ],
     "unlocked_towers": [
         "Coilgun",
-        "Lasergun"
+        "Lasergun",
+        "Railgun"
     ]
 }

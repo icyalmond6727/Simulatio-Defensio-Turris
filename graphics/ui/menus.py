@@ -167,8 +167,9 @@ class SaveMenuUI:
             deleting_slot (int or None): The index of the slot currently targeted for deletion.
         """
         surface.fill(config.COLOR_BACKGROUND)
-        sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
-        
+        save_font = get_font(config.FONT_SAVE_SIZE, name = config.FONT_NAME)
+        popup_title_font = get_font(config.FONT_POPUP_TITLE_SIZE, name = config.FONT_NAME)
+
         title_font = get_font(config.FONT_TITLE_SIZE, name = config.FONT_NAME)
         title = title_font.render("SELECT SAVE SLOT", True, config.C_WHITE)
         surface.blit(title, (config.WINDOW_WIDTH / 2 - title.get_width() / 2, get_val_y(80)))
@@ -179,10 +180,10 @@ class SaveMenuUI:
             
             if save_data[i] is not None:
                 max_level = max(save_data[i].get("unlocked_levels", [save_data[i].get("unlocked_level", 1)]))
-                txt = sys_font.render(f"Slot {i + 1} - Max Level: {max_level}", True, config.C_WHITE)
+                txt = save_font.render(f"Slot {i + 1} - Max Level: {max_level}", True, config.C_WHITE)
                 self.save_del_btns[i].draw(surface)
             else:
-                txt = sys_font.render(f"Slot {i + 1} - EMPTY", True, config.C_GRAY)
+                txt = save_font.render(f"Slot {i + 1} - EMPTY", True, config.C_GRAY)
             
             surface.blit(txt, (slot_rect.centerx - txt.get_width() / 2, slot_rect.centery - txt.get_height() / 2))
 
@@ -197,7 +198,7 @@ class SaveMenuUI:
             pygame.draw.rect(surface, config.C_BG_PANEL, self.confirm_popup, border_radius = get_val_x(config.UI_RADIUS))
             pygame.draw.rect(surface, config.C_OUTLINE_LIGHT, self.confirm_popup, width = max(1, get_val_x(3)), border_radius = get_val_x(config.UI_RADIUS))
             
-            warn_txt = sys_font.render("DELETE THIS SAVE?", True, config.C_RED)
+            warn_txt = popup_title_font.render("DELETE THIS SAVE?", True, config.C_RED)
             surface.blit(warn_txt, (self.confirm_popup.centerx - warn_txt.get_width() / 2, self.confirm_popup.top + get_val_y(config.UI_PADDING)))
 
             self.confirm_yes.draw(surface)

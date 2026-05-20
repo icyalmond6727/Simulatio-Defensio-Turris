@@ -45,6 +45,6 @@ class BasePopupUI:
         pygame.draw.rect(surface, outline_color, self.menu_rect, width = max(1, get_val_x(3)), border_radius = get_val_x(config.UI_RADIUS))
 
         if self.title_text:
-            sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
-            title = sys_font.render(self.title_text, True, self.title_color)
+            popup_title_font = get_font(config.FONT_POPUP_TITLE_SIZE, name = config.FONT_NAME)
+            title = popup_title_font.render(self.title_text, True, self.title_color)
             surface.blit(title, (self.menu_rect.centerx - title.get_width() / 2, self.menu_rect.top + get_val_y(40)))

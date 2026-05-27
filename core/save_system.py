@@ -3,8 +3,24 @@ Handles disk I/O operations for reading and writing player progression JSON file
 """
 import json
 import os
+import sys
 
-SAVE_DIR = "saves"
+def get_game_root_dir():
+    """
+    Determines the root directory where the game is located.
+    If running as a compiled macOS .app, it points to the folder containing the .app.
+    If running as a Windows .exe, it points to the folder containing the .exe.
+    If running as a Python script, it points to the project root.
+    """
+    if getattr(sys, 'frozen', False):
+        if "Contents/MacOS" in sys.executable:
+            return os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.executable))))
+        else:
+            return os.path.dirname(sys.executable)
+            
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+SAVE_DIR = os.path.join(get_game_root_dir(), "saves")
 
 def get_save_path(slot_index):
     """

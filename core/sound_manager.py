@@ -2,14 +2,25 @@
 Manages audio loading, playback, and event bindings for the game's sound effects.
 """
 import os
+import sys
 import pygame
+
+def resource_path(relative_path):
+    """
+    Get absolute path to resource.
+    """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class SoundManager:
     """
     Central controller for loading, caching, and playing game sound effects (SFX).
     Ensures the game does not crash if a sound file is missing.
     """
-    
+
     def __init__(self, event_bus):
         """
         Initializes the Pygame mixer, sets up the registry, and subscribes to the Event Bus.
@@ -26,7 +37,7 @@ class SoundManager:
         self.muted = False
         self._sfx_cache = {}
 
-        self.sfx_dir = os.path.join("assets", "audio", "sfx")
+        self.sfx_dir = resource_path(os.path.join("assets", "audio", "sfx"))
 
         self.sound_registry = {
             "ui_click": "click.wav",

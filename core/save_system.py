@@ -57,7 +57,7 @@ def save_slot(slot_index, data):
     path = get_save_path(slot_index)
     
     with open(path, "w") as f:
-        json.dump(data, f, indent = 4)
+        json.dump(data, f, indent=4)
 
 def delete_slot(slot_index):
     """

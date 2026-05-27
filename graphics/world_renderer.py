@@ -12,7 +12,7 @@ class WorldRenderer:
     """
 
     @staticmethod
-    def draw_enemy(surface, enemy, cx, cy, zoom, is_selected = False):
+    def draw_enemy(surface, enemy, cx, cy, zoom, is_selected=False):
         """
         Draws an enemy unit and its health bar.
         
@@ -70,7 +70,7 @@ class WorldRenderer:
             pygame.draw.circle(surface, config.C_YELLOW, (x, y), max(2, int(4 * zoom)))
 
     @staticmethod
-    def draw_tower_effects(surface, tower, cx, cy, zoom, upgrade_data = None):
+    def draw_tower_effects(surface, tower, cx, cy, zoom, upgrade_data=None):
         """
         Draws tower range indicators and targeting lines.
         
@@ -98,7 +98,7 @@ class WorldRenderer:
             pygame.draw.line(surface, config.C_WHITE, (x, y), (tx, ty), max(2, int(3 * zoom)))
 
     @staticmethod
-    def draw_tower(surface, tower, cx, cy, zoom, is_selected = False):
+    def draw_tower(surface, tower, cx, cy, zoom, is_selected=False):
         """
         Draws the physical tower structure.
         
@@ -160,7 +160,7 @@ class WorldRenderer:
             pygame.draw.rect(surface, config.COLOR_BUILD_TILE, (int(wx * zoom + cx) - tile_sz // 2, int(wy * zoom + cy) - tile_sz // 2, tile_sz, tile_sz))
 
     @staticmethod
-    def render_world(surface, in_game_scene, upgrading_tower = None, upgrade_data = None, build_tile_center = None):
+    def render_world(surface, in_game_scene, upgrading_tower=None, upgrade_data=None, build_tile_center=None):
         """
         Orchestrates the drawing sequence for the entire game world, handling z-indexing.
         
@@ -205,7 +205,7 @@ class WorldRenderer:
             WorldRenderer.draw_tower_effects(surface, tower, cx, cy, zoom, tower_upg_data)
         
         all_entities = in_game_scene.towers + in_game_scene.enemies + in_game_scene.projectiles
-        sorted_entities = quick_sort(all_entities, key = lambda e: (e.y, e.x))
+        sorted_entities = quick_sort(all_entities, key=lambda e: (e.y, e.x))
         selected_e = in_game_scene.selected_entity
         
         for entity in sorted_entities:

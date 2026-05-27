@@ -52,7 +52,7 @@ def get_val_y(v):
 pygame.font.init()
 _font_cache = {}
 
-def get_font(size, bold = True, name = 'Arial'):
+def get_font(size, bold=True, name='Arial'):
     """
     Instantiates and caches a system font to prevent redundant loading overhead.
     
@@ -69,6 +69,6 @@ def get_font(size, bold = True, name = 'Arial'):
     font_key = f"{name}_{scaled_size}_{bold}"
     
     if font_key not in _font_cache:
-        _font_cache[font_key] = pygame.font.SysFont(name, scaled_size, bold = bold)
+        _font_cache[font_key] = pygame.font.SysFont(name, scaled_size, bold=bold)
         
     return _font_cache[font_key]

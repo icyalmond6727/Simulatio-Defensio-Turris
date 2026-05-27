@@ -49,7 +49,7 @@ class SoundManager:
         self._preload_sounds()
 
         for action_key in self.sound_registry.keys():
-            event_bus.subscribe(action_key, lambda key = action_key: self.play(key))
+            event_bus.subscribe(action_key, lambda key=action_key: self.play(key))
 
     def _preload_sounds(self):
         """

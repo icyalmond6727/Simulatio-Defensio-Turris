@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.2] - 2026-05-26
+### Changed
+- GUI sizes, colors
+
+### Misc
+- Code refactoring
+
+## [v0.5.1] - 2026-05-20
+### Added
+- Draft content for level 2 to 24 (balancing needed):
++ New enemies
++ New tower
+
+### Changed
+- GUI sizes, colors
+
 ## [v0.5.0] - 2026-05-20
 ### Changed
 - GUI sizes, colors, etc

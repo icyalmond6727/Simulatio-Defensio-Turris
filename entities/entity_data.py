@@ -84,8 +84,8 @@ ENEMIES = {
         "speed": 1.5,
         "kinetic_resistance": 0,
         "thermal_resistance": 0,
-        "gold_yield": 10,
-        "lives_penalty": 1,
+        "reward": 10,
+        "penalty": 1,
         "color": (255, 0, 0)
     },
     "Light Attack Drone": {
@@ -96,8 +96,8 @@ ENEMIES = {
         "speed": 1,
         "kinetic_resistance": 0.2,
         "thermal_resistance": 0,
-        "gold_yield": 25,
-        "lives_penalty": 1,
+        "reward": 25,
+        "penalty": 1,
         "color": (150, 0, 0)
     },
     "Heavy Attack Drone": {
@@ -108,8 +108,8 @@ ENEMIES = {
         "speed": 0.5,
         "kinetic_resistance": 0.7,
         "thermal_resistance": 0.1,
-        "gold_yield": 60,
-        "lives_penalty": 2,
+        "reward": 60,
+        "penalty": 2,
         "color": (75, 0, 0)
     },
     "Swarm Drone": {
@@ -120,8 +120,8 @@ ENEMIES = {
         "speed": 2,
         "kinetic_resistance": 0,
         "thermal_resistance": 0.3,
-        "gold_yield": 5,
-        "lives_penalty": 1,
+        "reward": 5,
+        "penalty": 1,
         "color": (255, 100, 100)
     },
     "Shielded Interceptor": {
@@ -132,8 +132,8 @@ ENEMIES = {
         "speed": 1,
         "kinetic_resistance": 0.1,
         "thermal_resistance": 0.8,
-        "gold_yield": 75,
-        "lives_penalty": 2,
+        "reward": 75,
+        "penalty": 2,
         "color": (0, 200, 255)
     },
     "Armored Cruiser": {
@@ -144,8 +144,8 @@ ENEMIES = {
         "speed": 0.5,
         "kinetic_resistance": 0.85,
         "thermal_resistance": 0.3,
-        "gold_yield": 150,
-        "lives_penalty": 5,
+        "reward": 150,
+        "penalty": 5,
         "color": (100, 100, 100)
     },
     "Dreadnought": {
@@ -156,8 +156,8 @@ ENEMIES = {
         "speed": 0.25,
         "kinetic_resistance": 0.6,
         "thermal_resistance": 0.6,
-        "gold_yield": 500,
-        "lives_penalty": 10,
+        "reward": 500,
+        "penalty": 10,
         "color": (50, 0, 50)
     },
     "Apex Leviathan": {
@@ -168,8 +168,8 @@ ENEMIES = {
         "speed": 0.1,
         "kinetic_resistance": 0.75,
         "thermal_resistance": 0.75,
-        "gold_yield": 2000,
-        "lives_penalty": 20,
+        "reward": 2000,
+        "penalty": 20,
         "color": (20, 20, 20)
     }
 }

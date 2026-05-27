@@ -36,7 +36,7 @@ class NewEnemyMenu(Scene):
         if interaction.type == pygame.MOUSEBUTTONDOWN and interaction.button == 1:
             x, y = interaction.pos
 
-            if self.ui.ok_btn.is_clicked(x, y):
+            if self.ui.self_ok_btn.is_clicked(x, y):
                 self.game_manager.event_bus.emit("ui_click")
                 
                 if len(self.new_enemies_list) > 0:

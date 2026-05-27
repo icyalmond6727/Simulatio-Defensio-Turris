@@ -42,6 +42,7 @@ COLOR_GRID = (200, 200, 200)
 COLOR_PATH_TILE = (195, 165, 135)
 COLOR_BUILD_TILE = (100, 200, 100)
 
+# Typography settings
 FONT_NAME = 'Arial'
 FONT_UI_SIZE = 14
 FONT_STAT_SIZE = 16
@@ -51,9 +52,11 @@ FONT_LVL_SIZE = 24
 FONT_POPUP_TITLE_SIZE = 28
 FONT_TITLE_SIZE = 32
 
+# Standard colors
 C_WHITE = (248, 250, 252)
 C_BLACK = (15, 23, 42)
 
+# Element colors
 C_YELLOW = (250, 204, 21)
 C_RED = (244, 63, 94)
 C_RED_DARK = (190, 18, 60)
@@ -62,13 +65,16 @@ C_GREEN = (52, 211, 153)
 C_PURPLE = (168, 85, 247)
 C_ORANGE = (249, 115, 22)
 
+# Upgrade specific colors
 C_GREEN_UPG = (0, 255, 100)
 C_RED_UPG = (255, 80, 80)
 
+# Neutral and accent colors
 C_GRAY = (148, 163, 184)
 C_DARK_GRAY = (71, 85, 105)
 C_CYAN = (56, 189, 248)
 
+# Background panels and menus
 C_BG_DARK = (15, 23, 42)
 C_BG_MENU = (30, 41, 59)
 C_BG_PANEL = (30, 41, 59)
@@ -77,6 +83,7 @@ C_BG_SLOT = (51, 65, 85)
 C_BG_TOOLTIP = (15, 23, 42)
 C_BG_TOWER_MENU = (30, 41, 59)
 
+# Button states
 C_BTN_DEFAULT = (71, 85, 105)
 C_BTN_HOVER = (100, 116, 139)
 C_BTN_PRIMARY = (14, 165, 233)
@@ -86,14 +93,17 @@ C_BTN_WAVE = (14, 165, 233)
 C_BTN_WAVE_INACTIVE = (30, 41, 59)
 C_BTN_RES_ACTIVE = (245, 158, 11)
 
+# Borders and outlines
 C_OUTLINE_LIGHT = (100, 116, 139)
 C_OUTLINE_DARK = (15, 23, 42)
 C_OUTLINE_HIGHLIGHT = (56, 189, 248) 
 
+# Map connections and notifications
 C_LINE_CONN = (14, 165, 233)
 C_LINE_CONN_LOCKED = (51, 65, 85)
 C_NOTIF_BG = (244, 63, 94)
 
+# Overlays
 C_OVERLAY_ALPHA = 160
 C_OVERLAY_DARK_ALPHA = 200
 
@@ -104,17 +114,20 @@ UI_RADIUS = 8
 UI_RADIUS_SML = 4
 UI_RADIUS_HUD = 12
 
+# Menu Heights
 UI_INSPECT_H = 104
-UI_TOWER_BUILD_H = 144
+UI_TOWER_BUILD_H = 104
 UI_TOWER_MANAGE_OFFSET = 208
 UI_TOWER_MANAGE_H = 104
 UI_TOOLTIP_H = 64
 
+# Heads-Up Display (HUD) Positioning
 UI_HUD_X = 24
 UI_HUD_Y = 40         
 UI_HUD_W = 192
 UI_HUD_H = 104
 
+# Wave and Notification buttons
 UI_WAVE_BTN_X = 232
 UI_WAVE_BTN_Y = 40
 UI_WAVE_BTN_SIZE = 56
@@ -123,6 +136,7 @@ UI_NOTIF_BTN_X = 304
 UI_NOTIF_BTN_Y = 40
 UI_NOTIF_BTN_SIZE = 56
 
+# Standard Button Dimensions
 UI_BTN_W = 160
 UI_BTN_H = 48
 UI_BTN_TOWER_W = 224
@@ -134,6 +148,7 @@ UI_BTN_ACT_H = 48
 UI_BTN_OK_W = 120
 UI_BTN_OK_H = 48
 
+# Popups and Overlays Dimensions
 UI_POPUP_W = 600
 UI_POPUP_H = 320
 UI_CONFIRM_W = 480

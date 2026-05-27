@@ -11,7 +11,7 @@ class BasePopupUI:
     Handles the common rendering of the dark overlay, the main panel, and the top title.
     """
     
-    def __init__(self, width, height, title_text = "", title_color = config.C_WHITE):
+    def __init__(self, width, height, title_text="", title_color=config.C_WHITE):
         """
         Initializes the central container and text properties for the popup.
         
@@ -26,7 +26,7 @@ class BasePopupUI:
         self.title_text = title_text
         self.title_color = title_color
 
-    def draw_base(self, surface, overlay_alpha = config.C_OVERLAY_ALPHA, bg_color = config.C_BG_PANEL, outline_color = config.C_OUTLINE_LIGHT):
+    def draw_base(self, surface, overlay_alpha=config.C_OVERLAY_ALPHA, bg_color=config.C_BG_PANEL, outline_color=config.C_OUTLINE_LIGHT):
         """
         Draws the foundational layers of the popup (dimming overlay and panel box).
         
@@ -41,10 +41,10 @@ class BasePopupUI:
         overlay.fill(config.C_BLACK)
         surface.blit(overlay, (0, 0))
 
-        pygame.draw.rect(surface, bg_color, self.menu_rect, border_radius = get_val_x(config.UI_RADIUS))
-        pygame.draw.rect(surface, outline_color, self.menu_rect, width = max(1, get_val_x(3)), border_radius = get_val_x(config.UI_RADIUS))
+        pygame.draw.rect(surface, bg_color, self.menu_rect, border_radius=get_val_x(config.UI_RADIUS))
+        pygame.draw.rect(surface, outline_color, self.menu_rect, width=max(1, get_val_x(3)), border_radius=get_val_x(config.UI_RADIUS))
 
         if self.title_text:
-            popup_title_font = get_font(config.FONT_POPUP_TITLE_SIZE, name = config.FONT_NAME)
+            popup_title_font = get_font(config.FONT_POPUP_TITLE_SIZE, name=config.FONT_NAME)
             title = popup_title_font.render(self.title_text, True, self.title_color)
             surface.blit(title, (self.menu_rect.centerx - title.get_width() / 2, self.menu_rect.top + get_val_y(40)))

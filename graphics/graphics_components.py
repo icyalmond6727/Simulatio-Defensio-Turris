@@ -9,7 +9,7 @@ class UIButton:
     Standardized, reusable graphical button component for the user interface.
     """
     
-    def __init__(self, rect, text, font, bg_color, text_color, border_radius = 5, outline_color = None, outline_width = 0):
+    def __init__(self, rect, text, font, bg_color, text_color, border_radius=5, outline_color=None, outline_width=0):
         """
         Initializes the button's layout and styling parameters.
         
@@ -39,15 +39,15 @@ class UIButton:
         Args:
             surface (pygame.Surface): The target display surface.
         """
-        pygame.draw.rect(surface, self.bg_color, self.rect, border_radius = get_val_x(self.border_radius))
+        pygame.draw.rect(surface, self.bg_color, self.rect, border_radius=get_val_x(self.border_radius))
         
         if self.outline_color and self.outline_width > 0:
             pygame.draw.rect(
                 surface, 
                 self.outline_color, 
                 self.rect, 
-                width = max(1, get_val_x(self.outline_width)), 
-                border_radius = get_val_x(self.border_radius)
+                width=max(1, get_val_x(self.outline_width)), 
+                border_radius=get_val_x(self.border_radius)
             )
 
         if self.text:

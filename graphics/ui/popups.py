@@ -18,9 +18,10 @@ class PauseMenuUI(BasePopupUI):
         """
         super().__init__(get_val_x(config.UI_POPUP_W), get_val_y(config.UI_POPUP_H), "PAUSE", config.C_YELLOW)
         
-        btn_w, btn_h = get_val_x(config.UI_BTN_W), get_val_y(config.UI_BTN_H)
+        btn_w = get_val_x(config.UI_BTN_W)
+        btn_h = get_val_y(config.UI_BTN_H)
         gap = get_val_x(config.UI_GAP)
-        sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
+        sys_font = get_font(config.FONT_SYS_SIZE, name=config.FONT_NAME)
         
         total_btns_w = 3 * btn_w + 2 * gap
         start_x = self.menu_rect.centerx - total_btns_w / 2
@@ -67,9 +68,10 @@ class DefeatMenuUI(BasePopupUI):
         """
         super().__init__(get_val_x(config.UI_CONFIRM_W), get_val_y(config.UI_POPUP_H), "DEFEATED", config.C_RED)
         
-        btn_w, btn_h = get_val_x(config.UI_BTN_W), get_val_y(config.UI_BTN_H)
+        btn_w = get_val_x(config.UI_BTN_W)
+        btn_h = get_val_y(config.UI_BTN_H)
         gap = get_val_x(config.UI_GAP)
-        sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
+        sys_font = get_font(config.FONT_SYS_SIZE, name=config.FONT_NAME)
         
         total_btns_w = 2 * btn_w + gap
         start_x = self.menu_rect.centerx - total_btns_w / 2
@@ -103,9 +105,10 @@ class VictoryMenuUI(BasePopupUI):
         """
         super().__init__(get_val_x(config.UI_CONFIRM_W), get_val_y(config.UI_POPUP_H), "VICTORY", config.C_GREEN)
         
-        btn_w, btn_h = get_val_x(config.UI_BTN_W), get_val_y(config.UI_BTN_H)
+        btn_w = get_val_x(config.UI_BTN_W)
+        btn_h = get_val_y(config.UI_BTN_H)
         gap = get_val_x(config.UI_GAP)
-        sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
+        sys_font = get_font(config.FONT_SYS_SIZE, name=config.FONT_NAME)
         
         total_btns_w = 2 * btn_w + gap
         start_x = self.menu_rect.centerx - total_btns_w / 2
@@ -139,15 +142,16 @@ class NewEnemyMenuUI(BasePopupUI):
         """
         super().__init__(get_val_x(config.UI_NEM_W), get_val_y(config.UI_NEM_H))
         
-        ok_btn_w, ok_btn_h = get_val_x(config.UI_BTN_OK_W), get_val_y(config.UI_BTN_OK_H)
+        ok_btn_w = get_val_x(config.UI_BTN_OK_W)
+        ok_btn_h = get_val_y(config.UI_BTN_OK_H)
         
         ok_rect = pygame.Rect(
             self.menu_rect.right - get_val_x(config.UI_PADDING) - ok_btn_w, 
             self.menu_rect.bottom - get_val_y(config.UI_PADDING) - ok_btn_h, 
             ok_btn_w, ok_btn_h
         )
-        sys_font = get_font(config.FONT_SYS_SIZE, name = config.FONT_NAME)
-        self.ok_btn = UIButton(ok_rect, "OK", sys_font, config.C_BTN_SUCCESS, config.C_BLACK)
+        sys_font = get_font(config.FONT_SYS_SIZE, name=config.FONT_NAME)
+        self.self_ok_btn = UIButton(ok_rect, "OK", sys_font, config.C_BTN_SUCCESS, config.C_BLACK)
 
     def draw(self, surface, enemy_name, enemy_data):
         """
@@ -158,10 +162,10 @@ class NewEnemyMenuUI(BasePopupUI):
             enemy_name (str): Identifier logic string for the enemy.
             enemy_data (dict): Mapping containing the enemy's stat block.
         """
-        self.draw_base(surface, overlay_alpha = config.C_OVERLAY_DARK_ALPHA, bg_color = config.C_BG_PANEL_ALT, outline_color = config.C_RED)
+        self.draw_base(surface, overlay_alpha=config.C_OVERLAY_DARK_ALPHA, bg_color=config.C_BG_PANEL_ALT, outline_color=config.C_RED)
 
-        title_font = get_font(config.FONT_TITLE_SIZE, name = config.FONT_NAME)
-        stat_font = get_font(config.FONT_STAT_SIZE, name = config.FONT_NAME)
+        title_font = get_font(config.FONT_TITLE_SIZE, name=config.FONT_NAME)
+        stat_font = get_font(config.FONT_STAT_SIZE, name=config.FONT_NAME)
 
         current_y = self.menu_rect.top + get_val_y(config.UI_GAP)
 
@@ -178,8 +182,8 @@ class NewEnemyMenuUI(BasePopupUI):
         ui_tile_size = get_val_x(config.UI_ICON_SIZE)
         icon_rect = pygame.Rect(self.menu_rect.left + get_val_x(config.UI_PADDING), current_y, ui_tile_size, ui_tile_size)
         
-        pygame.draw.rect(surface, config.C_BG_PANEL, icon_rect, border_radius = get_val_x(config.UI_RADIUS_SML))
-        pygame.draw.rect(surface, config.C_GRAY, icon_rect, width = max(1, get_val_x(2)), border_radius = get_val_x(config.UI_RADIUS_SML))
+        pygame.draw.rect(surface, config.C_BG_PANEL, icon_rect, border_radius=get_val_x(config.UI_RADIUS_SML))
+        pygame.draw.rect(surface, config.C_GRAY, icon_rect, width=max(1, get_val_x(2)), border_radius=get_val_x(config.UI_RADIUS_SML))
 
         if enemy_data:
             ratio_w = enemy_data["width"] / config.TILE_SIZE
@@ -192,15 +196,19 @@ class NewEnemyMenuUI(BasePopupUI):
             stat_y = icon_rect.top 
             gap_y = stat_font.get_height() + get_val_y(config.UI_GAP) / 2
             
+            penalty_str = f"PENALTY: {enemy_data['penalty']} Life" if enemy_data['penalty'] == 1 else f"PENALTY: {enemy_data['penalty']} Lives"
+            
             stats = [
-                f"Health: {enemy_data['health']}", f"Speed: {enemy_data['speed']}",
-                f"Kinetic Resistance: {int(enemy_data['kinetic_resistance'] * 100)}%",
-                f"Thermal Resistance: {int(enemy_data['thermal_resistance'] * 100)}%",
-                f"Gold Yield: {enemy_data['gold_yield']} G", f"Lives Penalty: {enemy_data['lives_penalty']}"
+                (f"HEALTH: {enemy_data['health']}", config.C_RED),
+                (f"SPEED: {enemy_data['speed']}", config.C_BLUE_LIGHT),
+                (f"KINETIC RESISTANCE: {int(enemy_data['kinetic_resistance'] * 100)}%", config.C_PURPLE),
+                (f"THERMAL RESISTANCE: {int(enemy_data['thermal_resistance'] * 100)}%", config.C_ORANGE),
+                (f"REWARD: {enemy_data['reward']} Gold", config.C_YELLOW),
+                (penalty_str, config.C_RED_DARK)
             ]
             
-            for i, stat in enumerate(stats):
-                txt = stat_font.render(stat, True, config.C_BLUE_LIGHT)
+            for i, (stat_text, stat_color) in enumerate(stats):
+                txt = stat_font.render(stat_text, True, stat_color)
                 surface.blit(txt, (stats_x, stat_y + i * gap_y))
 
-        self.ok_btn.draw(surface)
+        self.self_ok_btn.draw(surface)

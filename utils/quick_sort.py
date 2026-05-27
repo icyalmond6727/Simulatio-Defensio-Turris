@@ -4,7 +4,7 @@ pivot selection method to mitigate worst-case O(N^2) scenarios, ensuring a stabl
 Used heavily for z-index sorting in the graphics pipeline.
 """
 
-def quick_sort(arr, key = lambda x: x):
+def quick_sort(arr, key=lambda x: x):
     """
     Sorts an array in-place using a recursive Quick Sort algorithm.
     
@@ -17,7 +17,7 @@ def quick_sort(arr, key = lambda x: x):
     """
     sorted_arr = arr.copy()
 
-    def median_of_three(arr, l, m, r, key = lambda x: x):
+    def median_of_three(arr, l, m, r, key=lambda x: x):
         """
         Optimizes pivot selection by finding the median value among the first, middle, 
         and last elements, moving it to the correct position for partitioning.
@@ -29,7 +29,7 @@ def quick_sort(arr, key = lambda x: x):
         if key(arr[l]) > key(arr[m]):
             arr[l], arr[m] = arr[m], arr[l]
 
-    def partition(arr, l, r, key = lambda x: x):
+    def partition(arr, l, r, key=lambda x: x):
         """
         Partitions a sub-array around a pivot element such that elements smaller than 
         the pivot are on the left, and larger elements are on the right.
@@ -49,7 +49,7 @@ def quick_sort(arr, key = lambda x: x):
         arr[r], arr[pivot] = arr[pivot], arr[r]
         return pivot
 
-    def _sort(arr, l, r, key = lambda x: x):
+    def _sort(arr, l, r, key=lambda x: x):
         """
         The core recursive Quick Sort logic, incorporating tail call optimization 
         strategies by sorting the smaller partition first to limit recursion depth.

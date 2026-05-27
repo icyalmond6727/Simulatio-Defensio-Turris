@@ -181,13 +181,13 @@ class InGame(Scene):
             build_tile_center = math_processor.get_tile_center(build_tile[0], build_tile[1], config.TILE_SIZE)
             
             if math_processor.get_distance(wx, wy, build_tile_center[0], build_tile_center[1]) <= config.TILE_SIZE / 2:
-                self.ui.open_tower_menu(build_tile = build_tile, build_tile_center = build_tile_center, unlocked_towers = self.level.towers)
+                self.ui.open_tower_menu(build_tile=build_tile, build_tile_center=build_tile_center, unlocked_towers=self.level.towers)
                 return
         
         for tower in self.towers:
             if math_processor.get_distance(wx, wy, tower.x, tower.y) <= tower.width / 2:
                 self.selected_entity = tower
-                self.ui.open_tower_menu(tower = tower, unlocked_towers = self.level.towers)
+                self.ui.open_tower_menu(tower=tower, unlocked_towers=self.level.towers)
                 return
                 
         for enemy in self.enemies:
@@ -230,7 +230,7 @@ class InGame(Scene):
                 if self.selected_entity == enemy:
                     self.selected_entity = None
                     
-                self.gold += enemy.gold_yield
+                self.gold += enemy.reward
                 self.game_manager.event_bus.emit("enemy_die")
                 self.enemies[i], self.enemies[-1] = self.enemies[-1], self.enemies[i]
                 self.enemies.pop()
@@ -240,7 +240,7 @@ class InGame(Scene):
                     self.selected_entity = None
                     
                 if self.lives > 0:
-                    self.lives -= enemy.lives_penalty
+                    self.lives -= enemy.penalty
                     
                 self.game_manager.event_bus.emit("enemy_escaped")
                 self.enemies[i], self.enemies[-1] = self.enemies[-1], self.enemies[i]
@@ -300,9 +300,9 @@ class InGame(Scene):
         WorldRenderer.render_world(
             surface, 
             self, 
-            upgrading_tower = upgrading_tower, 
-            upgrade_data = upgrade_data, 
-            build_tile_center = build_tile_center
+            upgrading_tower=upgrading_tower, 
+            upgrade_data=upgrade_data, 
+            build_tile_center=build_tile_center
         )
         
         self.ui.draw(surface, self, upgrade_data, mx, my)

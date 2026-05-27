@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.6.0] - 2026-05-27
+
+
 ## [v0.5.2] - 2026-05-26
 ### Changed
 - GUI sizes, colors

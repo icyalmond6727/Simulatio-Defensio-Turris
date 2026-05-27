@@ -1,4 +1,4 @@
-name: Build Tower Defense Releases
+name: Build Simulatio Defensio Turris Releases
 
 on:
   push:
@@ -24,13 +24,13 @@ jobs:
         pip install pyinstaller
 
     - name: Build Windows EXE
-      run: pyinstaller --windowed --name "TowerDefense_Windows" --add-data "assets;assets" main.py
+      run: pyinstaller --windowed --name "SimulatioDefensioTurris_Windows" --add-data "assets;assets" main.py
 
     - name: Upload Windows Folder
       uses: actions/upload-artifact@v4
       with:
-        name: TowerDefense-Windows
-        path: dist/TowerDefense_Windows/
+        name: SimulatioDefensioTurris-Windows
+        path: dist/SimulatioDefensioTurris_Windows/
 
   build-macos:
     runs-on: macos-latest
@@ -50,10 +50,10 @@ jobs:
         pip install pyinstaller
 
     - name: Build macOS APP
-      run: pyinstaller --windowed --name "TowerDefense_Mac" --add-data "assets:assets" main.py
+      run: pyinstaller --windowed --name "SimulatioDefensioTurris_macOS" --add-data "assets:assets" main.py
 
     - name: Upload macOS Folder
       uses: actions/upload-artifact@v4
       with:
-        name: TowerDefense-Mac
-        path: dist/TowerDefense_Mac.app
+        name: SimulatioDefensioTurris-macOS
+        path: dist/
